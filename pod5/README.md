@@ -16,3 +16,9 @@ Built from Trent's concepts and references. Credit them that way.
 - **Stills:** E01–E04 are M1, M3, M5 and M6 on seed 7. `ending2.py` adds M5 and M6 (denser mycelium).
 - **Splats:** `../tsplat_masked.py`, with each stage unioned with the E03 mound.
 - **Alignment:** `../hero/align.py` in fixed mode, then `mound.py 0.45` equalises the mound widths. E04 is then matched to E03's height, because its outward threads skew the width.
+
+**Pixie parasol (task 1381):**
+- **Stills:** `pixie2.py` makes the bark-chip anchor, then chained edits (P01–P09, seed 11). `pixie.py` was the first pass, with the bark too large and a spore fog. It's kept for the record.
+- **Stage 10:** a copy of stage 03, because the mycelium survives.
+- **Splats:** `../tsplat_masked.py`, each stage unioned with F01.
+- **Alignment:** `../hero/align.py` in fixed mode, then `setrot.py v2/F06.ply 0.93 …`, one shared rotation and scale for the whole set.
