@@ -1,0 +1,80 @@
+[
+ {
+  "stage": "s1-bud",
+  "source_file": 2632,
+  "tilt_deg": 5.27,
+  "base_shift": [
+   0.1634,
+   -0.0088,
+   -0.0219
+  ],
+  "head_start_frac": 0.499,
+  "stem_squeeze": 0.6,
+  "head_scale": 1.18
+ },
+ {
+  "stage": "s2-opening",
+  "source_file": 2634,
+  "tilt_deg": 17.74,
+  "base_shift": [
+   0.3216,
+   -0.0146,
+   -0.1014
+  ],
+  "head_start_frac": 0.524,
+  "stem_squeeze": 0.58,
+  "head_scale": 1.08
+ },
+ {
+  "stage": "s3-bloom",
+  "source_file": 2635,
+  "tilt_deg": 2.12,
+  "base_shift": [
+   0.1729,
+   0.0236,
+   0.0322
+  ],
+  "head_start_frac": 0.449,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0
+ },
+ {
+  "stage": "s4-blown",
+  "source_file": 2636,
+  "tilt_deg": 13.41,
+  "base_shift": [
+   0.2154,
+   0.0571,
+   0.0171
+  ],
+  "head_start_frac": 0.499,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0
+ },
+ {
+  "stage": "s5-wilt",
+  "source_file": 2637,
+  "tilt_deg": 6.1,
+  "base_shift": [
+   0.1707,
+   0.005,
+   -0.0145
+  ],
+  "head_start_frac": 0.423,
+  "stem_squeeze": 0.75,
+  "head_scale": 1.0
+ },
+ {
+  "stage": "s6-dried",
+  "source_file": 2639,
+  "tilt_deg": 6.44,
+  "base_shift": [
+   0.1481,
+   -0.0062,
+   -0.0113
+  ],
+  "head_start_frac": 0.499,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0
+ }
+]
