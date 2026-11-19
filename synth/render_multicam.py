@@ -8,11 +8,16 @@ out, N, RES, SPP = argv[0], int(argv[1]), int(argv[2]), int(argv[3])
 os.makedirs(os.path.join(out, "images"), exist_ok=True)
 scene = bpy.context.scene
 
-# One plant from the asset file: KEEP names it; every other mesh is hidden from the render.
+# One plant from the asset file: KEEP names it (or several, comma-separated); every other mesh is hidden from the render.
 keep = os.environ.get("KEEP")
+keep_set = set(keep.split(",")) if keep else None
 for o in scene.objects:
-    if o.type == "MESH" and keep and o.name != keep:
-        o.hide_render = True; o.hide_set(True)
+    if o.type == "MESH" and keep_set and o.name not in keep_set:
+        o.hide_render = True
+        try:
+            o.hide_set(True)          # objects outside the view layer can't be hidden in the viewport; hide_render is enough
+        except RuntimeError:
+            pass
 # Bounds of the kept mesh(es), in world space.
 pts = [o.matrix_world @ Vector(c) for o in scene.objects if o.type == "MESH" and not o.hide_render for c in o.bound_box]
 lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
@@ -27,7 +32,7 @@ scene.world = world; world.use_nodes = True
 nt = world.node_tree; nt.nodes.clear()
 sky = nt.nodes.new("ShaderNodeTexSky")
 bg_light = nt.nodes.new("ShaderNodeBackground"); bg_light.inputs[1].default_value = 0.6
-bg_cam = nt.nodes.new("ShaderNodeBackground"); bg_cam.inputs[0].default_value = (*[float(os.environ.get("BG", "0.18"))] * 3, 1)   # BG=0 for emissive scenes; bg_cam.inputs[1].default_value = 1.0
+bg_cam = nt.nodes.new("ShaderNodeBackground"); bg_cam.inputs[0].default_value = (*[float(os.environ.get("BG", "0.18"))] * 3, 1); bg_cam.inputs[1].default_value = 1.0   # BG=0 for emissive scenes
 lp = nt.nodes.new("ShaderNodeLightPath"); mix = nt.nodes.new("ShaderNodeMixShader"); wo = nt.nodes.new("ShaderNodeOutputWorld")
 nt.links.new(sky.outputs[0], bg_light.inputs[0]); nt.links.new(lp.outputs["Is Camera Ray"], mix.inputs[0])
 nt.links.new(bg_light.outputs[0], mix.inputs[1]); nt.links.new(bg_cam.outputs[0], mix.inputs[2]); nt.links.new(mix.outputs[0], wo.inputs[0])
