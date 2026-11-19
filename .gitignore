@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.ply
+*.png
+*.jpg
+*.webp
+*.mp4
+*.log
