@@ -1,0 +1,4 @@
+ply/E01.ply E01 fixed 1.0
+ply/E02.ply E02 fixed 1.0
+ply/E03.ply E03 fixed 1.0
+ply/E04.ply E04 fixed 1.0

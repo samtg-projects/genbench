@@ -9,3 +9,10 @@ Built from Trent's concepts and references. Credit them that way.
 - **Clip:** `clip.py OUTDIR x ply…` renders it with Trent's holds and a keyed dissolve.
 
 **Ending (Mel's story):** `ending.py` makes dry remains → soil mound → mycelium threads (text-to-image, then chained edits).
+
+**Stage 10 (the published set):** `dry.py` recolours the aligned 09 splat in place, so 09→10 dissolves continuously. The klein drying edit had come back unchanged.
+
+**Ending, as published:**
+- **Stills:** E01–E04 are M1, M3, M5 and M6 on seed 7. `ending2.py` adds M5 and M6 (denser mycelium).
+- **Splats:** `../tsplat_masked.py`, with each stage unioned with the E03 mound.
+- **Alignment:** `../hero/align.py` in fixed mode, then `mound.py 0.45` equalises the mound widths. E04 is then matched to E03's height, because its outward threads skew the width.

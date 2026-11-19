@@ -8,3 +8,4 @@ W07 c07_seed_23
 W08 c08_seed_23
 W09 c09_seed_23
 W10 t10_seed_23
+W10 = W09 dried in place (build/dry.py recolour), replaces t10_seed_23

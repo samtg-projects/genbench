@@ -1,0 +1,66 @@
+[
+ {
+  "stage": "E01",
+  "source": "ply/E01.ply",
+  "stem_width": 0.597,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.0997,
+   0.1817,
+   0.0146
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "E02",
+  "source": "ply/E02.ply",
+  "stem_width": 0.6693,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.069,
+   0.1877,
+   0.0106
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "E03",
+  "source": "ply/E03.ply",
+  "stem_width": 0.811,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.1574,
+   0.2799,
+   -0.0088
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "E04",
+  "source": "ply/E04.ply",
+  "stem_width": 0.6451,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   0.1332,
+   0.2995,
+   -0.3738
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ }
+]
