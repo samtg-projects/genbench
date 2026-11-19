@@ -10,4 +10,4 @@ The six-stage white rose (TripoSplat, y-down; PLYs plane file 2668, bundle `757a
 
 ## life25 v2 (task 1379)
 
-The same alignment on the 28-stage life25 v2 (TripoSplat sources `obelisk-services:~/var/genbench/triposplat/life28/L01…L28.ply`, bundle `8badcc89`). `align.py OUTDIR life25v2/spec.txt` (paths relative to a dir holding `life28/`). The squeeze `auto:0.025` thins a stem to the bloom-stage width only where it measures over 1.15×. That applies to L01–L03 and L05–L08. The heads are untouched. `survey.py ply…` prints tilt, base and stem width per stage. Outputs: strip file 3054, PLYs file 3055.
+The same alignment on the 28-stage life25 v2 (TripoSplat sources `obelisk-services:~/var/genbench/triposplat/life28/L01…L28.ply`, bundle `8badcc89`). `align.py OUTDIR life25v2/spec.txt` (paths relative to a dir holding `life28/`). The squeeze `auto:0.025` thins a stem to the bloom-stage width only where it measures over 1.15×. That applies to L01–L03 and L05–L08. The heads are untouched. `survey.py ply…` prints tilt, base and stem width per stage. Outputs: strip file 3080, PLYs file 3081.
