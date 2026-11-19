@@ -2,7 +2,7 @@
 import sys, numpy as np, cv2
 sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
 import plyload, splat
-import os; NOLINE = os.environ.get('NOLINE'); out = sys.argv[1]; W, H = 300, 600
+import os; NOLINE = os.environ.get('NOLINE'); out = sys.argv[1]; W, H = int(os.environ.get('TILEW', 300)), 600
 def thin(sp, n=140000):
     i = np.random.default_rng(0).permutation(np.nonzero(sp["opacity"] > 0.05)[0])[:n]; return {k: v[i] for k, v in sp.items()}
 tiles = []

@@ -2,20 +2,25 @@
 Per stage: fit the stem centreline below the head, rotate about the stem base so the stem is vertical,
 move the base to (0, BASE_Y, 0), straighten residual bend below the head, then optional stem thinning
 (xz squeeze about the axis, below the head) and head scale (about the head's base).
-Usage: align.py OUTDIR  (reads dl/six/<id>.ply, writes OUTDIR/<name>.ply and OUTDIR/align.json)"""
+Usage: align.py OUTDIR [SPEC]  (writes OUTDIR/<name>.ply and OUTDIR/align.json)
+SPEC: lines "src.ply name squeeze headscale"; squeeze "auto:W" thins the stem to width W only where it measures wider
+than 1.15 W. Without SPEC, the hero six-stage set (dl/six/<id>.ply, task 1376)."""
 import sys, json, numpy as np
 sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
 import plyload
-STAGES = [  # id, name, stem squeeze, head scale
-    ("2632", "s1-bud",     0.60, 1.18),
-    ("2634", "s2-opening", 0.58, 1.08),
-    ("2635", "s3-bloom",   1.0, 1.0),
-    ("2636", "s4-blown",   1.0, 1.0),
-    ("2637", "s5-wilt",    0.75, 1.0),
-    ("2639", "s6-dried",   1.0, 1.0),
+STAGES = [  # src, name, stem squeeze, head scale
+    ("dl/six/2632.ply", "s1-bud",     0.60, 1.18),
+    ("dl/six/2634.ply", "s2-opening", 0.58, 1.08),
+    ("dl/six/2635.ply", "s3-bloom",   1.0, 1.0),
+    ("dl/six/2636.ply", "s4-blown",   1.0, 1.0),
+    ("dl/six/2637.ply", "s5-wilt",    0.75, 1.0),
+    ("dl/six/2639.ply", "s6-dried",   1.0, 1.0),
 ]
 BASE_Y = 0.47
 out = sys.argv[1]; log = []
+if len(sys.argv) > 2:
+    STAGES = [l.split() for l in open(sys.argv[2]) if l.strip() and not l.startswith("#")]
+    STAGES = [(a, b, c, float(d)) for a, b, c, d in STAGES]
 
 def apply_linear(sp, sel, M):
     """x -> M x for positions (already done by caller) and covariances of splats in sel."""
@@ -34,11 +39,15 @@ def centreline(P, o, base, H, f0, f1):
     return np.array(rows)
 
 for sid, name, squeeze, hscale in STAGES:
-    sp = plyload.load(f"dl/six/{sid}.ply"); P = sp["pos"]; o = sp["opacity"] > 0.5
+    sp = plyload.load(sid); P = sp["pos"]; o = sp["opacity"] > 0.5
     base = np.percentile(P[o, 1], 99.5); H = base - np.percentile(P[o, 1], 0.5)
     c = centreline(P, o, base, H, 0.02, 0.6)
     # head starts where the band width jumps past 3x the stem's median width
-    sw = np.median(c[:8, 3]); jump = np.nonzero(c[:, 3] > 3 * sw)[0]
+    sw = np.median(c[:8, 3])
+    if isinstance(squeeze, str):
+        tw = float(squeeze.split(":")[1]); squeeze = round(tw / sw, 2) if sw > 1.15 * tw else 1.0
+    else: squeeze = float(squeeze)
+    jump = np.nonzero(c[:, 3] > 3 * sw)[0]
     yh = c[jump[0], 0] if len(jump) else base - 0.45 * H
     fh = (base - yh) / H
     st = c[(c[:, 0] > yh + 0.03 * H) & (c[:, 3] < 2 * sw)]
@@ -77,7 +86,7 @@ for sid, name, squeeze, hscale in STAGES:
             m = np.nonzero(np.round(g, 2) == gg)[0]
             apply_linear(sp, m, np.eye(3)[None] * gg)
     plyload.save(f"{out}/{name}.ply", sp)
-    log.append(dict(stage=name, source_file=int(sid), tilt_deg=round(float(tilt), 2), base_shift=[round(float(x), 4) for x in (np.array([0, BASE_Y, 0]) - pb)],
+    log.append(dict(stage=name, source=sid, stem_width=round(float(sw), 4), tilt_deg=round(float(tilt), 2), base_shift=[round(float(x), 4) for x in (np.array([0, BASE_Y, 0]) - pb)],
                     head_start_frac=round(float(fh), 3), stem_squeeze=squeeze, head_scale=hscale))
     print(log[-1])
 json.dump(log, open(f"{out}/align.json", "w"), indent=1)
