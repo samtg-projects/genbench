@@ -1,1 +1,2 @@
 F01-F09 = pixie2 P01-P09 seed 11; F10 = copy of F03 (mycelium survives)
+v3: align.py fixed -> register.py (trimmed ICP on F01's bark, lowest 25%) -> setrot.py F06 0.93 -> recentre on F01

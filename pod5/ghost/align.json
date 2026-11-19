@@ -1,0 +1,162 @@
+[
+ {
+  "stage": "G01",
+  "source": "ply/G01.ply",
+  "stem_width": 0.2659,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   0.0861,
+   0.2542,
+   -0.3379
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G02",
+  "source": "ply/G02.ply",
+  "stem_width": 0.3261,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   0.0424,
+   0.2597,
+   -0.2002
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G03",
+  "source": "ply/G03.ply",
+  "stem_width": 0.2808,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.1349,
+   0.2346,
+   0.2637
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G04",
+  "source": "ply/G04.ply",
+  "stem_width": 0.3302,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.1278,
+   0.2453,
+   0.2213
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G05",
+  "source": "ply/G05.ply",
+  "stem_width": 0.3613,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.0259,
+   0.149,
+   -0.0119
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G06",
+  "source": "ply/G06.ply",
+  "stem_width": 0.4964,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.2881,
+   0.0505,
+   0.1562
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G07",
+  "source": "ply/G07.ply",
+  "stem_width": 0.4971,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.2918,
+   0.0507,
+   0.1462
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G08",
+  "source": "ply/G08.ply",
+  "stem_width": 0.4287,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.11,
+   0.0795,
+   0.1009
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G09",
+  "source": "ply/G09.ply",
+  "stem_width": 0.1912,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.0851,
+   0.0651,
+   0.2735
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ },
+ {
+  "stage": "G10",
+  "source": "ply/G10.ply",
+  "stem_width": 0.2808,
+  "tilt_deg": 0.0,
+  "base_shift": [
+   -0.1349,
+   0.2346,
+   0.2637
+  ],
+  "head_start_frac": 0.45,
+  "stem_squeeze": 1.0,
+  "head_scale": 1.0,
+  "stemmed": false,
+  "height": null
+ }
+]

@@ -1,0 +1,2 @@
+G01-G03 P01-P03, G04 Q04, G05 Q05, G06-G08 P06-P08, G09 Q09 (seed 23); G10 = copy of G03
+align.py fixed -> register.py (LOWS=0.25 LOWT=0.6 onto G01) -> recentre on G01's log, G06 at 0.75 tall

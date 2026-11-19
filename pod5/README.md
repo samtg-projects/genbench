@@ -22,3 +22,8 @@ Built from Trent's concepts and references. Credit them that way.
 - **Stage 10:** a copy of stage 03, because the mycelium survives.
 - **Splats:** `../tsplat_masked.py`, each stage unioned with F01.
 - **Alignment:** `../hero/align.py` in fixed mode, then `setrot.py v2/F06.ply 0.93 …`, one shared rotation and scale for the whole set.
+
+**Anchor registration (pixie v3, ghost):** TripoSplat re-centres and rescales each stage by its own extent, so a fixed anchor (bark, log) drifts. `register.py REF ply…` with `LOWS=0.25 LOWT=0.6` runs a trimmed ICP (similarity transform) of each stage's lowest quarter, where only the anchor sits, onto the reference's anchor. After that come the shared `setrot.py` and a recentre on the reference.
+
+**Ghost fungus:** `ghost.py`, then `ghost_fix.py` (Q04, Q05 and Q09 re-worded), seed 23. Stage 10 is stage 03 again.
+**Butterfly:** `butterfly.py` makes a bare host-twig anchor with several short edit chains branching from it, so the twig holds its coordinates.
