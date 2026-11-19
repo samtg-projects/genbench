@@ -1,0 +1,10 @@
+W01 s01_seed_23
+W02 t02_seed_23
+W03 t03_seed_23
+W04 c04_seed_23 (t04)
+W05 c05_seed_23
+W06 c06_seed_23
+W07 c07_seed_23
+W08 c08_seed_23
+W09 c09_seed_23
+W10 t10_seed_23

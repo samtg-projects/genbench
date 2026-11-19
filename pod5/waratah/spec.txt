@@ -1,0 +1,11 @@
+# src name squeeze headscale height   (task 1380 waratah; heights in the y-down frame, full bloom = 0.93)
+ply/W01.ply W01 fixed 1.0 0.015
+ply/W02.ply W02 rigid 1.0 0.36
+ply/W03.ply W03 rigid 1.0 0.58
+ply/W04.ply W04 rigid 1.0 0.93
+ply/W05.ply W05 rigid 1.0 0.93
+ply/W06.ply W06 rigid 1.0 0.93
+ply/W07.ply W07 rigid 1.0 0.93
+ply/W08.ply W08 rigid 1.0 0.93
+ply/W09.ply W09 rigid 1.0 0.93
+ply/W10.ply W10 rigid 1.0 0.60
