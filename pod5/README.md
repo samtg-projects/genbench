@@ -45,3 +45,9 @@ Built from Trent's concepts and references. Credit them that way.
 - **More in-betweens:** `inbetween.py` makes halfway in-betweens for the existing chains (pixie, ghost, lorikeet).
 - **Thinning:** `thin3.py` is the balanced 30k test (per-cell quotas ∝ importance^0.5).
 - **Clips:** `clip.py` now thins by importance only.
+
+**In-betweens (task 1383):**
+- **Halfway edits fail:** `inbetween.py` asks for "halfway between image 1 and image 2". It duplicates a neighbour on small steps and snaps to one end on big ones. On the lorikeet it invented an extra bird.
+- **Targeted edits work:** `targeted.py` edits the earlier stage with a concrete description of the intermediate state.
+- **Thin-spear frames don't register:** they have too little anchor bulk, so they were dropped.
+- **Stage maps:** the pixie, ghost and lorikeet maps are in `*_v2/stage_map.txt`.
