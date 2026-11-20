@@ -11,7 +11,7 @@ def norm_mask(m, S=128):
     ys, xs = np.nonzero(m > 127); m = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
     h, w = m.shape; k = S / max(h, w); m = cv2.resize(m, (max(1, int(w * k)), max(1, int(h * k))))
     o = np.zeros((S, S), np.uint8); o[(S - m.shape[0]) // 2:(S - m.shape[0]) // 2 + m.shape[0], (S - m.shape[1]) // 2:(S - m.shape[1]) // 2 + m.shape[1]] = m; return o > 127
-want = norm_mask(cv2.imread(matte, cv2.IMREAD_UNCHANGED)[:, :, 3])
+want = None if "AZ" in os.environ else norm_mask(cv2.imread(matte, cv2.IMREAD_UNCHANGED)[:, :, 3])
 sp = plyload.load(ref); o = sp["opacity"] > 0.3; ctr = np.median(sp["pos"][o], 0); rad = np.percentile(np.linalg.norm(sp["pos"][o] - ctr, axis=1), 98)
 sub = {k: v[o][::max(1, o.sum() // 40000)] for k, v in sp.items()}
 def sil(az):

@@ -9,4 +9,5 @@ ssh samcloud "obelisk-services -- cd ~/var/claude-producer-1384/ply-$b && tar cf
 for f in raw/${X}[0-9][0-9].ply; do n=$(basename $f .ply); echo "raw/$n.ply $n fixed 1.0"; done > spec.txt
 if [ -n "$NOALIGN" ]; then cp raw/${X}[0-9][0-9].ply out/; else $PY $G/../../hero/align.py out spec.txt > align.log; fi   # NOALIGN: no stem to fit (the iris)
 env "$@" $PY $G/../register.py out/${X}00.ply $(ls out/${X}[0-9][0-9].ply | grep -v ${X}00) | tee register.log
-$PY $G/front.py out/${X}00.ply raw/${X}00-matte.png $h out/${X}[0-9][0-9].ply | tee front.log
+F=${FRONT:-${X}00}   # the stage whose silhouette gives the front (the anchor, unless it's too symmetric: the fig's soil)
+$PY $G/front.py out/$F.ply raw/$F-matte.png $h out/${X}[0-9][0-9].ply | tee front.log

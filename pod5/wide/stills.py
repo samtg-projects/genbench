@@ -177,9 +177,48 @@ def figm(s):
     shutil.copy(f"{d}/mini_G06_seed_{s}.png", f"{d}/mini_G07_seed_{s}.png")
 
 
+# The rock's other four zones (Trent's 3089: lichen rosettes, sickle fern, rock orchid, native climbing vine), each grown
+# on the same bare rock K00 in its own place, as chained edits. Trent's life cycle per zone: arrival to rest.
+ZONES = {
+    "lichen": ("on the large flat right face of the rock", [
+        "a few tiny pale grey-green lichen specks have arrived", "small round pale grey-green lichen rosettes are establishing",
+        "a cluster of flat leafy pale grey-green and orange lichen rosettes is spreading", "the lichen rosettes have expanded into a broad patch",
+        "the lichen patch is maturing: overlapping frilly grey-green rosettes with bright orange crust lichen between them",
+        "the lichen patch is at its peak: a wide, dense, frilly mosaic of grey-green and orange rosettes",
+        "the dense lichen mosaic holds at maturity", "the lichen is ageing: its grey-green fading and its rosettes curling at their edges",
+        "the lichen is decaying: dry, flaking, brownish-grey crusts. Lifeless, not gory", "only a few faint pale lichen specks remain"]),
+    "fern": ("on the top ridge of the rock", [
+        "a tiny green fern sporeling has arrived", "a small fern with two short fronds is establishing",
+        "a young sickle fern with a few curled fiddleheads and short arching fronds", "the sickle fern has expanded: a clump of arching fronds",
+        "the sickle fern is maturing: a full clump of long arching sickle-shaped fronds", "the sickle fern is at its peak: a lush clump of long arching fronds",
+        "the lush sickle fern holds at maturity", "the sickle fern is ageing: its fronds yellowing and drooping",
+        "the sickle fern is decaying: dry, brown, collapsed fronds. Lifeless, not gory", "only a small dry brown fern stub remains"]),
+    "orchid": ("on the lower left ledge of the rock", [
+        "a tiny green orchid shoot has arrived", "a small rock orchid with two thick leaves is establishing",
+        "a young rock orchid with a few thick leathery leaves and short pseudobulbs", "the rock orchid has expanded: a clump of leathery leaves and a flower spike",
+        "the rock orchid is in bud: arching sprays of cream flower buds", "the rock orchid is at its peak: arching sprays of fragrant cream and pale yellow star-shaped flowers",
+        "the flowering rock orchid holds at its peak", "the rock orchid is ageing: its flowers wilting and browning, its leaves yellowing",
+        "the rock orchid is decaying: dry brown flower stems and shrivelled leaves. Lifeless, not gory", "only a small dry stub of the orchid remains"]),
+    "vine": ("climbing up the right side of the rock from its base", [
+        "a tiny native vine seedling has arrived at the base", "a small vine with a few leaves is establishing at the base",
+        "the native vine has begun to climb, a thin stem with small glossy leaves", "the native vine has expanded up the side of the rock",
+        "the native vine is maturing: leafy tendrils spreading across the right side", "the native vine is at its peak: a lush, leafy climbing vine over the right side",
+        "the lush vine holds at maturity", "the native vine is ageing: its leaves yellowing and thinning",
+        "the native vine is decaying: dry brown leaves and bare stems. Lifeless, not gory", "only a few dry stem fragments of the vine remain at the base"])}
+def zone(name, s):
+    where, stages = ZONES[name]; d = f"{ROOT}/zone-{name}"; os.makedirs(d, exist_ok=True)
+    shutil.copy(f"{ROOT}/rock/K00_seed_{s}.png", f"{d}/K00_seed_{s}.png")
+    FROM = [0, 1, 2, 3, 4, 5, 6, 6, 8, 9]
+    for k in range(1, 11):
+        edit([f"{d}/K{FROM[k - 1]:02d}_seed_{s}.png"], f"The same rock; {where}, {stages[k - 1]}. Nothing grows anywhere else on the rock. {KEEP_ROCK}",
+             s, f"{d}/K{k:02d}_seed_{s}.png")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "anchors":
         anchors()
+    elif sys.argv[1] == "zone":
+        for z in sys.argv[3:]: zone(z, sys.argv[2])
     elif sys.argv[1] == "figm":
         figm(sys.argv[2])
     elif sys.argv[1] == "fig2":

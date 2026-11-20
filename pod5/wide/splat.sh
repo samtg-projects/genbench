@@ -4,7 +4,7 @@
 #   splat.sh <branch> [seed]     reads ~/var/claude-producer-1384/<branch>/<X>NN_seed_<seed>.png, writes pick-<branch>/ and ply-<branch>/
 set -e
 R=$HOME/var/claude-producer-1384; b=$1; s=${2:-7}; PY=$HOME/var/genbench/triposplat/venv/bin/python
-case $b in cham) X=C;; iris|irisw) X=I;; rock|rockc) X=K;; fig|figp|figp2) X=G;; flowers) X=W;; esac
+case $b in cham) X=C;; iris|irisw) X=I;; rock|rockc|rockz-*) X=K;; fig|figp|figp2) X=G;; flowers) X=W;; esac
 mkdir -p $R/pick-$b
 for f in $R/$b/${X}[0-9][0-9]_seed_$s.png; do n=$(basename $f _seed_$s.png); cp $f $R/pick-$b/$n.png; done
 cd $R/pick-$b

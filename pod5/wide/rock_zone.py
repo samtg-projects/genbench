@@ -1,7 +1,8 @@
 """Task 1384, rock (Trent's branch 05): keep the rock immutable. klein repainted the rock's surface from stage 4 on, so each
 stage here is the bare rock K00 with only its growth zone composited in: the zone is where the stages differ from K00
 inside the zone box (the largest difference region across stages, dilated), feathered at its edge.
-    rock_zone.py SRC_DIR OUT_DIR ZONE         reads K00..K10_seed_7.png, writes KNN.png and KNN-zone.png"""
+    rock_zone.py SRC_DIR OUT_DIR ZONE         reads K00..K10_seed_7.png, writes KNN.png and KNN-zone.png
+ZONE is moss, lichen, fern, orchid or vine; every zone's stills are edits of the same bare rock K00."""
 import sys, cv2, numpy as np
 src, out, zone = sys.argv[1], sys.argv[2], sys.argv[3]
 K = [cv2.imread(f"{src}/K{k:02d}_seed_7.png").astype(np.float32) for k in range(11)]
@@ -15,7 +16,8 @@ print(zone, "zone box", (x - pad, y - pad, w + 2 * pad, h + 2 * pad))
 cv2.imwrite(f"{out}/K00.png", K[0].astype(np.uint8))
 for k in range(1, 11):
     hsv = cv2.cvtColor(K[k].astype(np.uint8), cv2.COLOR_BGR2HSV); H = hsv[:, :, 0].astype(int)
-    growth = ((H >= 8) & (H <= 95)) | (hsv[:, :, 1] < 60)              # moss greens, olives and browns; not klein's pink/blue specks
+    lo, sat = (4, 80) if zone == "lichen" else (8, 60)                  # lichen: orange crusts and pale grey-greens too
+    growth = ((H >= lo) & (H <= 95)) | (hsv[:, :, 1] < sat)            # greens, olives, browns, creams; not klein's pink/blue specks
     m = ((diff[k] > 40) & (box > 0) & growth).astype(np.uint8)
     m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)); m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
     n, lab, st, _ = cv2.connectedComponentsWithStats(m)
