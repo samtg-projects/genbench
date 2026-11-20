@@ -51,3 +51,7 @@ Built from Trent's concepts and references. Credit them that way.
 - **Targeted edits work:** `targeted.py` edits the earlier stage with a concrete description of the intermediate state.
 - **Thin-spear frames don't register:** they have too little anchor bulk, so they were dropped.
 - **Stage maps:** the pixie, ghost and lorikeet maps are in `*_v2/stage_map.txt`.
+
+**Pixie v3 (task 1383):**
+- **Stills:** `pixie3.py` then `pixie3b.py`, with Trent tiles as the edit targets.
+- **Splats:** `tsplat_alpha.py` uses a brightness and BiRefNet matte for stills on black. BiRefNet alone drops small dark anchors.

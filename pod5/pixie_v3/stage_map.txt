@@ -1,0 +1,13 @@
+Q04 S04
+Q05 J45
+Q06 S05
+Q07 J56
+Q08 S06
+Q09 S07b
+Q10 S08b
+Q11 S09b
+Q01 S01b
+Q02 S02b
+Q03 S03b
+Q12 = Q03 (return to substrate: mycelium survives)
+Q04-Q11 splatted with tsplat_alpha.py (brightness matte keeps the bark), registered on Q08's bark (LOWS=0.2), setrot Q08 0.93, recentred; Q01-Q03 fixed at heights 0.03/0.09/0.14
