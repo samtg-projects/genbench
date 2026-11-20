@@ -33,3 +33,8 @@ Built from Trent's concepts and references. Credit them that way.
 - **Butterfly:** parked. The thin twig makes every fit collapse to the scale floor. The next try is render-and-compare against each frame's own matte.
 
 **Reef (staghorn):** `reef.py`, seed 7, registered on the bare rock R00 (`LOWS=0.25 KEEP=0.6`). From stage 5 the rock's back changes shape, because TripoSplat re-invents it once the thicket appears.
+
+**Quality pass (task 1383):**
+- **Diagnosis:** `diag.py STAGE.ply OUT N…` renders the full count against thinned versions, from front, side and back, with a head close-up.
+- **Finding:** the patchiness is the thinning. The ⅓ opacity-sampled share scatters tiny opaque splats as speckles. Importance-only thinning (opacity × projected area) is clean at the same count.
+- **Tests:** `thin_test.py` and `thin2.py` compare the recipes. A head bias starves the leaves, so it was rejected.
