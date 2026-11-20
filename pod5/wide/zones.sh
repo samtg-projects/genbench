@@ -3,12 +3,16 @@
 #   zones.sh <zone> <moss-run K00.ply>    composite -> TripoSplat (Obelisk claim) -> register onto that K00 -> zone layer
 set -e
 z=$1; K00=$2; G=${0:A:h}; W=${POD5:-/private/tmp/pod5}/zone-$z; PY=/opt/homebrew/bin/python3; R=/Users/obelisk-services/var/claude-producer-1384
-rm -rf $W && mkdir -p $W/src $W/comp $W/up/rockz-$z $W/raw $W/out $W/final
-ssh samcloud "obelisk-services -- cd $R/zone-$z && tar cf - K*_seed_7.png" 2>/dev/null | tar xf - -C $W/src
-$PY $G/rock_zone.py $W/src $W/comp $z | tail -1
+if [ -z "$NOCOMP" ]; then   # NOCOMP: the composites in $W/comp are already made (the lichen, by lichen_grow.py)
+  rm -rf $W && mkdir -p $W/src $W/comp
+  ssh samcloud "obelisk-services -- cd $R/zone-$z && tar cf - K*_seed_7.png" 2>/dev/null | tar xf - -C $W/src
+  $PY $G/rock_zone.py $W/src $W/comp $z | tail -1
+fi
+rm -rf $W/up $W/raw $W/out $W/final && mkdir -p $W/up/rockz-$z $W/raw $W/out $W/final
+ssh samcloud "obelisk-services -- rm -rf $R/ply-rockz-$z $R/pick-rockz-$z $R/rockz-$z" 2>/dev/null
 for k in $(seq -w 0 10); do cp $W/comp/K$k.png $W/up/rockz-$z/K${k}_seed_7.png; done
 (cd $W/up && tar cf - rockz-$z) | ssh samcloud "obelisk-services -- tar xf - -C $R" 2>/dev/null
-ssh samcloud "obelisk-services -- ~/.local/bin/obelisk-job run cp1384-splat-$z --purpose 'task 1384: pod5 rock $z zone TripoSplat, claude-producer' --memory 16384 --cwd $R -- $R/genbench/splat.sh rockz-$z" 2>/dev/null | tail -1
+ssh samcloud "obelisk-services -- ~/.local/bin/obelisk-job run cp1384-splat-$z-$(date +%H%M%S) --purpose 'task 1384: pod5 rock $z zone TripoSplat, claude-producer' --memory 16384 --cwd $R -- $R/genbench/splat.sh rockz-$z" 2>/dev/null | tail -1
 until [ "$(ssh samcloud "obelisk-services -- ls $R/ply-rockz-$z 2>/dev/null | grep -c '^K[0-9][0-9].ply'" 2>/dev/null | tail -1)" -ge 11 ]; do sleep 20; done
 ssh samcloud "obelisk-services -- cd $R/ply-rockz-$z && tar cf - K*.ply" 2>/dev/null | tar xf - -C $W/raw
 cp $W/raw/K*.ply $W/out/

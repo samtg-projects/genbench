@@ -14,8 +14,22 @@ x, y, w, h = st[big, :4]; pad = int(0.25 * max(w, h))
 box = np.zeros_like(peak); box[max(0, y - pad):y + h + pad, max(0, x - pad):x + w + pad] = 1
 print(zone, "zone box", (x - pad, y - pad, w + 2 * pad, h + 2 * pad))
 cv2.imwrite(f"{out}/K00.png", K[0].astype(np.uint8))
+if zone == "vine":                                                     # a thin climber spread up the right edge: its whole side
+    box[:] = 0; box[:, K[0].shape[1] // 2:] = 1
 for k in range(1, 11):
     hsv = cv2.cvtColor(K[k].astype(np.uint8), cv2.COLOR_BGR2HSV); H = hsv[:, :, 0].astype(int)
+    if zone == "vine":                                                 # its leaves only: greens, every blob (no main region)
+        m = ((diff[k] > 40) & (box > 0) & (H >= 33) & (H <= 90) & (hsv[:, :, 1] > 50)).astype(np.uint8)
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8)); m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+        dead = {8: 0.4, 9: 0.85, 10: 0.9}.get(k, 0)                       # klein's decay edits stayed green: age the leaves here
+        if k == 10:                                                     # rest: only the lowest stems remain
+            ys = np.nonzero(m)[0]; m[: int(np.percentile(ys, 70))] = 0 if len(ys) else m[:0]
+        a = cv2.GaussianBlur(m.astype(np.float32), (0, 0), 1.5)[:, :, None]
+        g = cv2.cvtColor(cv2.cvtColor(K[k].astype(np.uint8), cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR).astype(np.float32)
+        leaf = K[k] * (1 - dead) + (g * 0.5 + np.array([45, 75, 110], np.float32) * 0.5) * dead
+        o = K[0] * (1 - a) + leaf * a
+        cv2.imwrite(f"{out}/K{k:02d}.png", o.astype(np.uint8)); cv2.imwrite(f"{out}/K{k:02d}-zone.png", (a[:, :, 0] * 255).astype(np.uint8))
+        print(f"K{k:02d}", "zone px", int(m.sum())); continue
     lo, sat = (4, 80) if zone == "lichen" else (8, 60)                  # lichen: orange crusts and pale grey-greens too
     growth = ((H >= lo) & (H <= 95)) | (hsv[:, :, 1] < sat)            # greens, olives, browns, creams; not klein's pink/blue specks
     m = ((diff[k] > 40) & (box > 0) & growth).astype(np.uint8)
