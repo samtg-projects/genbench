@@ -27,3 +27,9 @@ Built from Trent's concepts and references. Credit them that way.
 
 **Ghost fungus:** `ghost.py`, then `ghost_fix.py` (Q04, Q05 and Q09 re-worded), seed 23. Stage 10 is stage 03 again.
 **Butterfly:** `butterfly.py` makes a bare host-twig anchor with several short edit chains branching from it, so the twig holds its coordinates.
+
+**register.py multi-start:** `STARTS=N` tries N random starting rotations. `SMIN` and `MAXROT` bound the scale and the rotation, and the fit with the lowest trimmed rms wins.
+- **Lorikeet:** registers well on the branch, because the nest and blossom give it bulk. K04, K11, K12 and K17 needed `SMIN=0.75 MAXROT=25`.
+- **Butterfly:** parked. The thin twig makes every fit collapse to the scale floor. The next try is render-and-compare against each frame's own matte.
+
+**Reef (staghorn):** `reef.py`, seed 7, registered on the bare rock R00 (`LOWS=0.25 KEEP=0.6`). From stage 5 the rock's back changes shape, because TripoSplat re-invents it once the thicket appears.

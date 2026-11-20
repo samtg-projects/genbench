@@ -1,0 +1,2 @@
+K00 = A (bare branch, reference), K01-K17 = L01-L17, seed 23
+align.py fixed -> register.py onto K00 (STARTS=32 KEEP=0.45 SMIN=0.4 MAXROT=100; K04 K11 K12 K17 again with SMIN=0.75 MAXROT=25) -> recentre on K00. Publish K01-K17; K00 is the reference only.

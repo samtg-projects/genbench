@@ -1,0 +1,1 @@
+R00 bare rock (reference only), R01-R10 = P01-P10 seed 7. align.py fixed -> register.py onto R00 (LOWS=0.25 LOWT=0.6 KEEP=0.6) -> recentre on R00, R06 at 0.85 tall
