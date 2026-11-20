@@ -15,6 +15,7 @@ Every GPU run is a claim on `obelisk-services/gpu-0` through `~/.local/bin/obeli
 | `align_plane.py`, `align_base.py`, `extent.py` | stage alignment (PCA plane to a reference or axis; ground and base centre) and extent checks |
 | `preview.py`, `align_sheet.py`, `prep_tile.py`, `grid.py`, `crop.py`, `wip.py` | sheets and process videos with nerfstudio-api's CPU point renderer |
 | `synth/` | pathway B/D: Blender Cycles multicam → `transforms.json` → Brush. `render_multicam.py` (env `VIEWS RES SPP DIST ELEV SUN TRANSPARENT BG`), `scene_cloud.py`, `scene_nebula.py`, `full-scene.sh <scene.py> <name> <views> <res> <spp> [seed]` |
+| `seat-tools/ob-image`, `seat-tools/ob-triposplat` | installed in `obelisk-services:~/.local/bin` for hermes-obelisk (task 1398): queue images through Obelisk's image service, and image → splat through TripoSplat, as the calling seat |
 | `pathC/`, `pathC-splat.sh` | pathway C: image → Wan turntable → splat. `posesweep/mk_tf.py` (analytic circle poses), `seed.py` (seed points; Brush's random init misses the origin for an arc of cameras), `fitpose.py` (per-frame azimuth/elevation fit against a trained splat), `compare.py`, `where.py` |
 
 ## Conventions

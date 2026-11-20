@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# ob-triposplat: image -> 3D Gaussian splat (TripoSplat, 262,144 splats, SH 0) on Obelisk, as this seat.
+#
+#   ob-triposplat run NAME IMAGE...   IMAGE: a plane file URL (.../api/v1/files/N/raw), a file id N, or a local PNG/JPEG
+#   ob-triposplat show NAME           queue state and finished PLYs
+#
+# One claim on obelisk-services/gpu-0 (16 GB) through obelisk-job, queued first come first served with no
+# deadline; `run` returns as soon as the claim is requested. Outputs: ~/var/hermes-obelisk/3d/NAME/out/<stem>.ply
+# plus <stem>-prepared.webp (the cut-out it saw). The PLYs are y-down and the input image looks along -x:
+# register them with splatFrame up 0,-1,0, view -1,0,0 (doc 660). Background removal is built in.
+# Task 1398 (samclaude-admin, for Sam: "obelisk all direct tools needed").
+set -euo pipefail
+ROOT=$HOME/var/hermes-obelisk/3d
+T=$HOME/var/genbench/triposplat
+usage() { sed -n 2,13p "$0" | sed 's/^# \{0,1\}//'; exit 2; }
+[ $# -ge 2 ] || usage
+cmd=$1 name=$2; shift 2
+[[ $name =~ ^[a-z0-9][a-z0-9-]{0,40}$ ]] || { echo "NAME: lowercase letters, digits and dashes" >&2; exit 2; }
+run=$ROOT/$name
+case $cmd in
+run)
+  [ $# -ge 1 ] || usage
+  [ ! -e "$run/claim" ] || { echo "$name already has a claim ($(cat "$run/claim")); use a new NAME" >&2; exit 1; }
+  mkdir -p "$run/in" "$run/out"
+  i=0
+  for src in "$@"; do
+    i=$((i + 1)); dst=$(printf '%s/in/s%02d' "$run" "$i")
+    if [[ $src =~ ^[0-9]+$ ]]; then src=https://cloud.samtg.xyz/api/v1/files/$src/raw; fi
+    if [[ $src =~ ^https://cloud\.samtg\.xyz/api/v1/files/[0-9]+/raw$ ]]; then
+      curl -sf -H @"$HOME/.samcloud/token.hdr" -o "$dst.img" "$src" || { echo "could not read $src as this seat" >&2; exit 1; }
+    elif [ -f "$src" ]; then cp "$src" "$dst.img"
+    else echo "not a plane file URL, file id or local file: $src" >&2; exit 1; fi
+    sips -s format png "$dst.img" --out "$dst.png" >/dev/null && rm "$dst.img"
+    echo "$(basename "$dst").png <- $src" >> "$run/map.txt"
+  done
+  key=hermes-obelisk-triposplat-$name-$(date +%s)
+  echo "$key" > "$run/claim"
+  nohup "$HOME/.local/bin/obelisk-job" run "$key" --purpose "hermes-obelisk: TripoSplat $name ($i images), task 1398" \
+    --memory 16384 -- "$T/venv/bin/python" "$HOME/var/genbench/tsplat_stream.py" "$run/in" "$run/out" "$i" "s[0-9][0-9].png" \
+    > "$run/driver.log" 2>&1 < /dev/null &
+  sleep 3
+  echo "$i images queued as claim $key. Check with: ob-triposplat show $name"
+  ;;
+show)
+  [ -e "$run/claim" ] || { echo "no run named $name" >&2; exit 1; }
+  key=$(cat "$run/claim")
+  echo "claim $key"
+  "$HOME/.local/bin/obelisk-job" status "$key" 2>/dev/null | /usr/bin/python3 -c '
+import json, sys
+try: d = json.load(sys.stdin)
+except Exception: print("  queue: no status yet (claim being requested)"); sys.exit()
+c = d.get("claim") or {}
+print("  queue:", c.get("state", "unknown"), "| workload:", c.get("workload", "-"))' || true
+  n=$(ls "$run"/in/s[0-9][0-9].png 2>/dev/null | wc -l | tr -d ' ')
+  ls "$run"/out/*.ply 2>/dev/null | while read -r p; do echo "  done: $p"; done
+  echo "  $(ls "$run"/out/*.ply 2>/dev/null | wc -l | tr -d ' ') of $n images converted"
+  ;;
+*) usage ;;
+esac

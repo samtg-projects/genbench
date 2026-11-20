@@ -1,0 +1,141 @@
+#!/Users/obelisk-services/.local/share/uv/tools/mflux/bin/python
+"""ob-image: generate images on Obelisk's image service (FLUX.2 klein 4B, 1024x1024, q8, 4 steps) as this seat.
+
+  ob-image batch PROMPTS.json --reply-to task:N --name NAME   submit every prompt, then return at once
+  ob-image show NAME                                          what's finished, waiting or failed, with URLs
+
+PROMPTS.json is a list: [{"key": "rose-botanical-s1", "prompt": "...", "seed": 1}, ...]
+  key:  lowercase letters, digits and dashes; unique in the batch; it is the job's idempotency key
+  seed: optional integer, default 0
+
+Each prompt becomes a durable job under this seat's own identity (`creative-text` profile). The service
+queues its GPU work on obelisk-services/gpu-0 like every other job: exclusive, first come first served.
+There is no deadline; a run waits as long as the queue takes. Results are hosted plane files whose
+readers are the --reply-to object's readers; nothing is posted as a comment. A background observer
+writes each URL to ~/var/hermes-obelisk/images/NAME/results.jsonl as it lands. Running the same batch
+again is safe: the same key returns the same job and never generates a second image.
+Task 1398 (samclaude-admin, for Sam: "obelisk all direct tools needed").
+"""
+import json, os, re, subprocess, sys, threading
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+RELEASE = Path.home() / "var/obelisk-services/image-service/releases/e5645903b719449e4f385212d3ac90f26bfdcee7"
+API = "http://127.0.0.1:8811/v1"
+TOKEN = Path.home() / ".samcloud/token"
+RUNS = Path.home() / "var/hermes-obelisk/images"
+sys.path.insert(0, str(RELEASE))
+from image_service.client import Client, ClientError, image_request  # noqa: E402
+
+
+def load(path):
+    items = json.loads(Path(path).read_text())
+    if not isinstance(items, list) or not items:
+        sys.exit("PROMPTS.json must be a non-empty list of {key, prompt, seed}")
+    keys = set()
+    for i, it in enumerate(items):
+        if not isinstance(it, dict) or not isinstance(it.get("prompt"), str) or not it["prompt"].strip():
+            sys.exit(f"item {i}: needs a non-empty prompt")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,80}", str(it.get("key", ""))) or it["key"] in keys:
+            sys.exit(f"item {i}: key must be unique, lowercase letters, digits and dashes")
+        if type(it.get("seed", 0)) is not int:
+            sys.exit(f"item {i}: seed must be an integer")
+        keys.add(it["key"])
+    return items
+
+
+def batch(args):
+    prompts, reply_to, name = args.get("prompts"), args.get("reply-to"), args.get("name")
+    if not (prompts and reply_to and name):
+        sys.exit(__doc__)
+    if not re.fullmatch(r"(ticket|task|doc):[1-9][0-9]*", reply_to):
+        sys.exit("--reply-to must be ticket:N, task:N or doc:N")
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", name):
+        sys.exit("--name: lowercase letters, digits and dashes")
+    items = load(prompts)
+    run = RUNS / name
+    run.mkdir(parents=True, exist_ok=True)
+    (run / "prompts.json").write_text(json.dumps(items, indent=1))
+    (run / "reply_to").write_text(reply_to)
+    log = open(run / "runner.log", "a")
+    subprocess.Popen([sys.executable, __file__, "_run", str(run)], stdin=subprocess.DEVNULL,
+                     stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+    print(f"{len(items)} prompts handed to a background runner for '{name}'. "
+          f"It submits each as a job, then records URLs as they land.\nCheck with: ob-image show {name}")
+
+
+def _run(run):
+    run = Path(run)
+    items = json.loads((run / "prompts.json").read_text())
+    kind, oid = (run / "reply_to").read_text().strip().split(":")
+    client = Client(API, str(TOKEN))
+    lock = threading.Lock()
+
+    def record(path, row):
+        with lock, open(run / path, "a") as f:
+            f.write(json.dumps(row) + "\n")
+
+    done = {json.loads(l)["key"] for l in open(run / "results.jsonl")} if (run / "results.jsonl").exists() else set()
+    jobs = []
+    for it in items:
+        if it["key"] in done:
+            continue
+        key = "ob-" + run.name + "-" + it["key"]
+        try:
+            acc = image_request(client, key=key, prompt=it["prompt"], reference="", profile="creative-text",
+                                reply_to={"kind": kind, "object_id": int(oid)}, seed=it.get("seed", 0),
+                                delivery_mode="response")
+            record("submitted.jsonl", {"key": it["key"], "job_id": acc["job_id"], "seed": it.get("seed", 0)})
+            jobs.append((it, acc["job_id"]))
+        except ClientError as e:
+            record("results.jsonl", {"key": it["key"], "error": "not submitted: " + str(e)})
+    print(f"submitted {len(jobs)}", flush=True)
+
+    def observe(pair):
+        it, job = pair
+        try:  # one streaming observer per job; waits as long as the queue takes
+            record("results.jsonl", {"key": it["key"], "job_id": job, "seed": it.get("seed", 0), "url": client.result(job)})
+        except ClientError as e:
+            record("results.jsonl", {"key": it["key"], "job_id": job, "error": str(e),
+                                     "resume": "ob-image show re-reads; the job itself is unaffected"})
+
+    with ThreadPoolExecutor(max_workers=12) as pool:
+        list(pool.map(observe, jobs))
+    print("all observed", flush=True)
+
+
+def show(name):
+    run = RUNS / name
+    if not (run / "prompts.json").exists():
+        sys.exit(f"no run named {name}")
+    items = json.loads((run / "prompts.json").read_text())
+    read = lambda p: [json.loads(l) for l in open(run / p)] if (run / p).exists() else []
+    sub, res = read("submitted.jsonl"), read("results.jsonl")
+    ok = [r for r in res if r.get("url")]
+    bad = [r for r in res if r.get("error")]
+    print(f"{name}: {len(items)} prompts, {len(sub)} submitted, {len(ok)} finished, {len(bad)} failed, "
+          f"{len(items) - len(ok) - len(bad)} waiting")
+    for r in ok:
+        print(f"  {r['key']}  seed {r['seed']}  {r['url']}")
+    for r in bad:
+        print(f"  {r['key']}  FAILED  {r['error']}")
+
+
+def main(argv):
+    if len(argv) >= 2 and argv[0] == "_run":
+        return _run(argv[1])
+    if len(argv) == 2 and argv[0] == "show":
+        return show(argv[1])
+    if argv and argv[0] == "batch" and len(argv) >= 2:
+        opts, rest = {"prompts": argv[1]}, argv[2:]
+        while rest:
+            if len(rest) < 2 or not rest[0].startswith("--"):
+                sys.exit(__doc__)
+            opts[rest[0][2:]] = rest[1]
+            rest = rest[2:]
+        return batch(opts)
+    sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
