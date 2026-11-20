@@ -11,8 +11,8 @@ FPS, W, H, N, XF = 24, 720, 720, 30000, 0.7
 rng = np.random.default_rng(5)
 S = []
 for p in plys:
-    sp = plyload.load(p); i = np.nonzero(sp["opacity"] > 0.05)[0]
-    w = sp["opacity"][i]; i = rng.choice(i, size=min(N, len(i)), replace=False, p=w / w.sum())
+    sp = plyload.load(p); s = sp["scale"]            # importance-only thinning (task 1383): top N by opacity x projected area
+    imp = sp["opacity"] * (s[:, 0]*s[:, 1] + s[:, 1]*s[:, 2] + s[:, 0]*s[:, 2]); i = np.argsort(-imp)[:N]
     sp = {k: v[i] for k, v in sp.items()}; sp["rank"] = rng.random(len(i)); S.append(sp)
 t_edges = np.cumsum([0] + HOLD); T = t_edges[-1]
 ax = {"x": (1, 0, 0), "-x": (-1, 0, 0), "z": (0, 0, 1), "-z": (0, 0, -1)}[view]

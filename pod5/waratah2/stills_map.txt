@@ -1,0 +1,17 @@
+V01 X01 =
+V02 X02 S02
+V03 X03 M02
+V04 X04 S03
+V05 X05 M03
+V06 X06 S04
+V07 X07 M04
+V08 X08 S05
+V09 X09 M05
+V10 X10 S06
+V11 X11 M06
+V12 X12 S07
+V13 X14 S08
+V14 X15 M08
+V15 X16 S09
+V16 X18 S10
+X01 = v1 W01 seed (reused); X13 (M07) and X17 (M09) dropped: their heads came out smaller and the stems short, so they jumped in the dissolve

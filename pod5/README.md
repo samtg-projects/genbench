@@ -38,3 +38,10 @@ Built from Trent's concepts and references. Credit them that way.
 - **Diagnosis:** `diag.py STAGE.ply OUT N…` renders the full count against thinned versions, from front, side and back, with a head close-up.
 - **Finding:** the patchiness is the thinning. The ⅓ opacity-sampled share scatters tiny opaque splats as speckles. Importance-only thinning (opacity × projected area) is clean at the same count.
 - **Tests:** `thin_test.py` and `thin2.py` compare the recipes. A head bias starves the leaves, so it was rejected.
+
+**Waratah v2 (task 1383):**
+- **Stills:** `waratah2.py` makes 16 stages with Trent's storyboard tiles as the reference input. It re-renders his tile 07 as a photo, then chains edits taking [previous stage, his tile], adding halfway in-betweens.
+- **Splats:** aligned rigid. Heights come from the image measurements, and early stages use his ratios.
+- **More in-betweens:** `inbetween.py` makes halfway in-betweens for the existing chains (pixie, ghost, lorikeet).
+- **Thinning:** `thin3.py` is the balanced 30k test (per-cell quotas ∝ importance^0.5).
+- **Clips:** `clip.py` now thins by importance only.
