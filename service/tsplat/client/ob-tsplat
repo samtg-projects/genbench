@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""ob-tsplat: turn a plane image into a 3D Gaussian splat on Obelisk's tsplat-service, as this seat.
+
+  ob-tsplat run FILE_ID --reply-to task:N [--matte auto|opaque|rgba] [--key KEY]   submit, return at once
+  ob-tsplat wait JOB_ID                                                              block until done or failed
+
+FILE_ID is a plane file you can read (an image). The PLY, the prepared input, a beauty shot and a
+4-view sheet are linked to the --reply-to task or ticket, so its readers can open them; the service
+also posts a short comment there. matte: auto cuts out the subject and falls back to the whole frame
+if it finds none; opaque keeps the whole frame; rgba uses your own alpha.
+
+Jobs queue on the GPU first come first served, with no deadline: a wait of minutes is
+normal, so don't resubmit. The same --key returns the same job (default: derived from the request).
+Auth is this seat's ~/.samcloud/token.hdr. The service URL comes from $TSPLAT_URL (the deploy or
+the Obelisk release).
+"""
+import json, os, sys, time, urllib.error, urllib.request
+
+BASE = os.environ.get("TSPLAT_URL") or os.environ.get("TSPLAT_BASE", "https://tsplat-obelisk.samtg.xyz")
+API = "https://cloud.samtg.xyz/api/v1"
+
+
+def auth():
+    line = open(os.path.expanduser("~/.samcloud/token.hdr")).read().strip()
+    return line.split(":", 1)[1].strip()
+
+
+def call(method, path, body=None, headers=None, timeout=150):
+    h = {"Authorization": auth()}
+    if body is not None: h["Content-Type"] = "application/json"
+    h.update(headers or {})
+    req = urllib.request.Request(BASE + path, method=method, headers=h,
+                                 data=json.dumps(body).encode() if body is not None else None)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        try: return e.code, json.loads(e.read() or b"{}")
+        except ValueError: return e.code, {"error": e.reason}
+
+
+def usage():
+    print(__doc__.strip(), file=sys.stderr); sys.exit(2)
+
+
+def show(j):
+    out = {k: j.get(k) for k in ("id", "state", "error", "timings")}
+    r = j.get("result") or {}
+    for k in ("ply_file_id", "prepared_file_id", "beauty_file_id", "sheet_file_id"):
+        if r.get(k): out[k.replace("_file_id", "")] = f"{API}/files/{r[k]}/raw"
+    if r: out["matte_used"] = r.get("matte_used"); out["frame"] = r.get("frame")
+    print(json.dumps(out, indent=1))
+
+
+def main(a):
+    if len(a) < 2: usage()
+    if a[0] == "run":
+        fid, rest = a[1], a[2:]
+        opts = dict(zip(rest[::2], rest[1::2]))
+        if not fid.isdigit() or "--reply-to" not in opts: usage()
+        kind, _, oid = opts["--reply-to"].partition(":")
+        if kind not in ("task", "ticket") or not oid.isdigit(): usage()
+        body = {"file_id": int(fid), "matte": opts.get("--matte", "auto"),
+                "reply_to": {"kind": kind, "id": int(oid)}}
+        hdr = {"Idempotency-Key": opts["--key"]} if "--key" in opts else None
+        st, j = call("POST", "/v1/splat", body, hdr)
+        if st not in (200, 202): print(f"HTTP {st}: {j.get('error', j)}", file=sys.stderr); sys.exit(1)
+        show(j); print(f"next: ob-tsplat wait {j['id']}", file=sys.stderr)
+    elif a[0] == "wait":
+        while True:
+            st, j = call("GET", f"/v1/jobs/{a[1]}/wait?timeout_s=120")
+            if st != 200: print(f"HTTP {st}: {j.get('error', j)}", file=sys.stderr); sys.exit(1)
+            if j["state"] in ("done", "failed"): show(j); sys.exit(0 if j["state"] == "done" else 1)
+            print(f"{time.strftime('%H:%M:%S')} {j['state']}", file=sys.stderr)
+    else:
+        usage()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

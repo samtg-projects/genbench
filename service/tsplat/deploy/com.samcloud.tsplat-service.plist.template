@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.samcloud.tsplat-service</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>@VENV@/bin/python</string><string>-B</string><string>-m</string><string>tsplat_service</string>
+    <string>--config</string><string>@RELEASE@/service.json</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONPATH</key><string>@RELEASE@</string>
+    <key>HF_HUB_OFFLINE</key><string>1</string>
+    <key>PYTORCH_ENABLE_MPS_FALLBACK</key><string>1</string>
+  </dict>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ProcessType</key><string>Standard</string>
+  <key>LimitLoadToSessionType</key><string>Background</string>
+  <key>StandardOutPath</key><string>@HOME@/.local/var/tsplat-service/logs/service.log</string>
+  <key>StandardErrorPath</key><string>@HOME@/.local/var/tsplat-service/logs/service.log</string>
+</dict>
+</plist>

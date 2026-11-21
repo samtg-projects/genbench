@@ -4,11 +4,11 @@
 #   ob-triposplat run NAME IMAGE...   IMAGE: a plane file URL (.../api/v1/files/N/raw), a file id N, or a local PNG/JPEG
 #   ob-triposplat show NAME           queue state and finished PLYs
 #
-# One claim on obelisk-services/gpu-0 (16 GB) through obelisk-job, queued first come first served with no
+# One claim on the GPU device (16 GB) through obelisk-job, queued first come first served with no
 # deadline; `run` returns as soon as the claim is requested. Outputs: ~/var/hermes-obelisk/3d/NAME/out/<stem>.ply
 # plus <stem>-prepared.webp (the cut-out it saw). The PLYs are y-down and the input image looks along -x:
 # register them with splatFrame up 0,-1,0, view -1,0,0 (doc 660). Background removal is built in.
-# Task 1398 (samclaude-admin, for Sam: "obelisk all direct tools needed").
+# Task: ob-triposplat seat tool for hermes-obelisk.
 set -euo pipefail
 ROOT=$HOME/var/hermes-obelisk/3d
 T=$HOME/var/genbench/triposplat

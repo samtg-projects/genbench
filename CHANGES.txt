@@ -1,0 +1,41 @@
+tsplat-service -> genbench service/tsplat integration: sanitization log
+
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/client/ob-tsplat
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/client/ob-tsplat: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/client/ob-tsplat
+[2026-11-21 08:46 UTC] SANITIZE   service/tsplat/client/ob-tsplat: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/client/ob-tsplat
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/client/ob-tsplat: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/deploy/service.example.json
+[2026-11-21 08:46 UTC] SANITIZE   deploy/service.example.json: plane identity/paths/registry -> REPLACE-WITH-YOUR-*
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/deploy/com.samcloud.obelisk-tsplat-service.plist.template
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/deploy/com.samcloud.obelisk-tsplat-service.plist.template: x2
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/deploy/com.samcloud.obelisk-tsplat-service.plist.template
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/deploy/com.samcloud.obelisk-tsplat-service.plist.template: x1
+[2026-11-21 08:46 UTC] RENAME     plist template de-obelisk'd -> com.samcloud.tsplat-service.plist.template
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tsplat_service/registry.py
+[2026-11-21 08:46 UTC] SANITIZE   service/tsplat/tsplat_service/registry.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tsplat_service/registry.py
+[2026-11-21 08:46 UTC] SANITIZE   service/tsplat/tsplat_service/registry.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tsplat_service/registry.py
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/tsplat_service/registry.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tsplat_service/worker.py
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/tsplat_service/worker.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/README.md
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/README.md: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/README.md
+[2026-11-21 08:46 UTC] SANITIZE   service/tsplat/README.md: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/README.md
+[2026-11-21 08:46 UTC] SANITIZE   service/tsplat/README.md: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/README.md
+[2026-11-21 08:46 UTC] SANITIZE   README 'Run it': obelisk paths / actor names -> generic + DEPLOY.md ref
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tests/test_service.py
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/tests/test_service.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tests/test_service.py
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/tests/test_service.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tests/test_service.py
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/tests/test_service.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/tests/test_service.py
+[2026-11-21 08:46 UTC] GENERICIZE service/tsplat/tests/test_service.py: x1
+[2026-11-21 08:46 UTC] WRITE      service/tsplat/.gitignore
+[2026-11-21 08:46 UTC] GITIGNORE  service/tsplat/.gitignore: keep weights/ckpts/outputs/state/logs/token/service.json out
