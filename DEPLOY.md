@@ -86,9 +86,11 @@ grep "listening on" ~/local/var/tsplat-service/logs/service.log
 # An orphaned lease once held Obelisk's queue for ~5.5 h (1136 c14918–c14920,
 # fixed by PR #10 / 24949f6): a load that fails must give the lease back, not
 # renew it forever.
-TOKEN=$(cat ~/.local/var/tsplat-service/token)
-curl -sS -H "Authorization: Bearer $TOKEN" \
-  "https://tsplat-obelisk.samtg.xyz/v1/resources/gpu-0" | python3 -m json.tool
+# Resources live on the plane API, not on the service; URL-encode the resource id.
+# Authenticate with a header file so the token never appears on a command line.
+curl -sS -H @"$HOME/.samcloud/token.hdr" \
+  "https://cloud.samtg.xyz/api/v1/resources/<resource_id, e.g. obelisk-services%2Fgpu-0>" \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); print("unsettled:", d["unsettled"]); print("leases:", [(l["id"], l["agent_id"], l["status"]) for l in d["leases"]])'
 # expect: "unsettled": []   (active and queued may be non-empty; that's fine)
 ```
 
