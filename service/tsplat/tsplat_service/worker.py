@@ -27,6 +27,8 @@ class Warm:
     def __init__(self, cfg, me):
         self.cfg, self.me = cfg, me
         self.pipe = None; self.lease = None; self.stop = threading.Event(); self.lease_wait_s = 0.0
+        self.gpu = threading.Lock()                    # one TripoSplat run at a time: samcloud jobs and registry pool jobs
+        self.last_used = time.time()
 
     def ensure(self):
         if self.pipe: return self.pipe
@@ -61,6 +63,21 @@ class Warm:
         STATE["loaded"] = True
         log.info("pipeline loaded in %.1fs under lease %s", time.time() - t, self.lease)
         return self.pipe
+
+    def splat(self, src, matte, n, work, timings):
+        """ensure + splat_one with timings; call with self.gpu held."""
+        self.lease_wait_s = 0.0
+        t = time.time(); pipe = self.ensure()
+        timings["lease_wait_s"] = self.lease_wait_s                      # queued behind other gpu-0 holders
+        timings["load_s"] = round(time.time() - t - self.lease_wait_s, 1)
+        torch = _torch()
+        t = time.time()
+        out = splat_one(pipe, src, matte, n, work)
+        timings["splat_s"] = round(time.time() - t, 1)
+        if _mps(torch):
+            timings["peak_mps_gb"] = round(torch.mps.driver_allocated_memory() / 2**30, 1)
+        self.last_used = time.time()
+        return out
 
     def _renew(self):
         every = self.cfg.get("renewal_interval", 30)
@@ -132,7 +149,10 @@ def run(cfg, jobs, me):
         try:
             jid = jobs.q.get(timeout=idle)
         except queue.Empty:
-            if warm.pipe or warm.lease: log.info("idle %ss; releasing", idle); warm.release()
+            if (warm.pipe or warm.lease) and time.time() - warm.last_used >= idle:
+                with warm.gpu:                         # re-check under the lock: a pool run may have just finished
+                    if (warm.pipe or warm.lease) and time.time() - warm.last_used >= idle:
+                        log.info("idle %ss; releasing", idle); warm.release()
             continue
         j = jobs.get(jid)
         if not j or j["state"] not in ("queued",): continue
@@ -147,16 +167,8 @@ def run(cfg, jobs, me):
             spec = j["spec"]
             src = plane.fetch_as_caller(api, bearer, spec["file_id"], work / "input.png")
             timings["fetch_s"] = round(time.time() - t0, 1)
-            warm.lease_wait_s = 0.0
-            t = time.time(); pipe = warm.ensure()
-            timings["lease_wait_s"] = warm.lease_wait_s                      # queued behind other gpu-0 holders
-            timings["load_s"] = round(time.time() - t - warm.lease_wait_s, 1)
-            torch = _torch()
-            t = time.time()
-            g, prepared, used = splat_one(pipe, src, spec["matte"], spec["num_gaussians"], work)
-            timings["splat_s"] = round(time.time() - t, 1)
-            if _mps(torch):
-                timings["peak_mps_gb"] = round(torch.mps.driver_allocated_memory() / 2**30, 1)
+            with warm.gpu:
+                g, prepared, used = warm.splat(src, spec["matte"], spec["num_gaussians"], work, timings)
             stem = f"tsplat-{spec['file_id']}"
             ply = work / f"{stem}.ply"; g.save_ply(str(ply))
             prep = work / f"{stem}-prepared.webp"; prepared.save(str(prep))

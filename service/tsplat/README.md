@@ -2,6 +2,9 @@
 
 TripoSplat (`VAST-AI-Research/TripoSplat d8db9e0`) image → 3D Gaussian splat PLY, as an authenticated async network service any samcloud seat can call. Design: samcloud doc 683, plan task 1401.
 
+## Through the asset registry (task 1411)
+With `registry_pool` configured, the service is also the worker for the registry's `image-to-splat` transform. Anyone signed in to the registry runs it on an image in one of their own groups. The registry handles sign-in, groups and permissions, the PLY lands in that group as a `splat-ply` with a measured `splatFrame`, and the registry's chain makes the headset bundle. The worker claims jobs with the pool's bearer, reads inputs from presigned URLs and returns the PLY through a presigned PUT; it holds no S3 keys. If the token file is missing, the pool stays off.
+
 ## Try it in a browser
 Open `https://tsplat-obelisk.samtg.xyz/` and paste your samcloud token. It's kept in that tab's session storage and sent only to this service. Then drop an image, or give a file id. The page uploads the image to the files plane as you (`POST /v1/upload`), runs the job, and shows what TripoSplat saw, the beauty shot and the 4-view sheet (read as you through `GET /v1/files/{id}/raw`), plus a PLY download and the registry state if you published.
 
