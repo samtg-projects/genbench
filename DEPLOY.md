@@ -18,7 +18,7 @@ in genbench and pulled on the host by the deploy script.
 
 ```sh
 # On the build machine: archive a merged commit, embed as base64 in the deploy script
-SHA=$(git rev-parse --short=12 HEAD)                        # e.g. de33ee9e7e9d (live; check /health)
+SHA=$(git rev-parse --short=12 HEAD)                       # e.g. de33ee9e7e9d
 git archive --format=tar.gz --prefix=tsplat-service/ "$SHA" service/tsplat \
   | base64 > bundle.b64
 echo "$(shasum -a 256 bundle.b64 | awk '{print $1}')" > bundle.sha256
@@ -89,9 +89,9 @@ grep "listening on" ~/local/var/tsplat-service/logs/service.log
 # Resources live on the plane API, not on the service; URL-encode the resource id.
 # Authenticate with a header file so the token never appears on a command line.
 curl -sS -H @"$HOME/.samcloud/token.hdr" \
-   "https://cloud.samtg.xyz/api/v1/resources/<resource_id, e.g. obelisk-services%2Fgpu-0>" \
-   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("unsettled:", d["unsettled"]); print("leases:", [(l["id"], l["agent_id"], l["status"]) for l in d["leases"]])'
-# expect: "unsettled": []    (active and queued may be non-empty; that's fine)
+  "https://cloud.samtg.xyz/api/v1/resources/<resource_id, e.g. obelisk-services%2Fgpu-0>" \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); print("unsettled:", d["unsettled"]); print("leases:", [(l["id"], l["agent_id"], l["status"]) for l in d["leases"]])'
+# expect: "unsettled": []   (active and queued may be non-empty; that's fine)
 ```
 
 The launch agent gives the process a GPU lease via the `resource_id` in
@@ -141,9 +141,9 @@ worker for the registry's `image-to-splat` transform: the registry owns
 sign-in, groups and permissions, and the worker claims jobs with its pool
 bearer, reads the input from a presigned URL and returns the PLY through a
 presigned PUT — it holds no S3 keys. If the pool's `token_file` is missing the
-pool stays off (the service still serves normal jobs). The idle-release path
-re-checks under the GPU lock (PR #12) so a load that fails gives the lease
-back.
+pool stays off (the service still serves normal jobs). The idle release
+re-checks under the GPU lock (PR #12), so a pool run that has just finished
+keeps the model loaded.
 
 ## 6. Test page (PR #9)
 
