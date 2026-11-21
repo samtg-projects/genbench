@@ -1,6 +1,6 @@
 {
   "plane_url": "https://cloud.samtg.xyz/api/v1",
-  "state_dir": "~/.local/var/tsplat-service/state",
+  "state_dir": "~/var/obelisk-services/tsplat-service/state",
   "host": "0.0.0.0",
   "port": 8812,
   "allowed_groups": [
@@ -9,23 +9,33 @@
   ],
   "admins": [],
   "principal": {
-    "token_file": "~/.local/var/tsplat-service/token",
-    "expected_username": "REPLACE-WITH-YOUR-SERVICE-USERNAME",
-    "expected_user_id": "REPLACE-WITH-YOUR-USER-ID"
+    "token_file": "~/.config/samcloud-services/tsplat-service.token",
+    "expected_username": "obelisk-tsplat-service",
+    "expected_user_id": 82
   },
-  "resource_id": "REPLACE-WITH-YOUR-RESOURCE",
-  "service_id": "REPLACE-WITH-YOUR-SERVICE-ID",
+  "resource_id": "obelisk-services/gpu-0",
+  "service_id": "obelisk-services/tsplat-service",
   "memory_mb": 16384,
   "ttl_seconds": 120,
   "renewal_interval": 30,
   "max_total_s": 21600,
   "idle_release_s": 600,
   "file_group": "tsplat-service-sink",
-  "triposplat_repo": "~/.local/var/triposplat/repo",
+  "triposplat_repo": "~/var/genbench/triposplat/repo",
   "publish_enabled": true,
   "version": "set-by-release",
-  "registry_url": "REPLACE-WITH-YOUR-REGISTRY",
-  "registry_group": "REPLACE-WITH-YOUR-REGISTRY-GROUP",
+  "registry_url": "https://assets-wafer.samtg.xyz",
+  "registry_group": "d6b7b69b880a44d0932e16f37825f1cf",
   "registry_poll_s": 15,
-  "registry_max_wait_s": 3600
+  "registry_max_wait_s": 3600,
+  "registry_pool": {
+    "url": "https://assets-wafer-stg.samtg.xyz",
+    "pool": "tsplat-obelisk",
+    "presets": [
+      "image-to-splat"
+    ],
+    "token_file": "~/.config/samcloud-services/tsplat-pool-stg.token",
+    "worker": "tsplat-obelisk",
+    "poll_s": 10
+  }
 }

@@ -8,7 +8,7 @@ import hashlib, json, logging, os, queue, signal, sys, threading, time, urllib.e
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import plane, worker
+from . import plane, pool, worker
 
 UI_HTML = (Path(__file__).parent / "ui.html").read_bytes()
 SAFE_IMAGES = ("image/png", "image/jpeg", "image/webp")      # never text/html or image/svg+xml from this origin
@@ -153,7 +153,7 @@ def make_handler(cfg, jobs, auth, me):
             if p == "/health":
                 return self._send(200, {"status": "ok", "service": "tsplat-service", "version": cfg.get("version"),
                                         "model_loaded": worker.STATE["loaded"], "lease": worker.STATE["lease"],
-                                        "queue_depth": jobs.depth()})
+                                        "queue_depth": jobs.depth(), "registry_pool": pool.STATE})
             if p.startswith("/v1/jobs/"):
                 parts = p.split("/")
                 j = jobs.get(parts[3])
@@ -219,9 +219,11 @@ def main():
     me.check()                                          # refuses to start under the wrong identity
     jobs = Jobs(state)
     threading.Thread(target=worker.run, args=(cfg, jobs, me), daemon=True, name="worker").start()
+    pool.start(cfg)                                     # registry image-to-splat jobs, when configured
     srv = ThreadingHTTPServer((cfg.get("host", "127.0.0.1"), int(cfg["port"])), make_handler(cfg, jobs, plane.Auth(cfg), me))
     def stop(signum, _frame):
         log.info("signal %s: shutting down", signum)
+        pool.requeue_on_exit()
         worker.release_on_exit()
         os._exit(0)
     signal.signal(signal.SIGTERM, stop); signal.signal(signal.SIGINT, stop)

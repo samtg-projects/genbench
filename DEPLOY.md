@@ -18,7 +18,7 @@ in genbench and pulled on the host by the deploy script.
 
 ```sh
 # On the build machine: archive a merged commit, embed as base64 in the deploy script
-SHA=$(git rev-parse --short=12 HEAD)                       # e.g. 24949f65d966
+SHA=$(git rev-parse --short=12 HEAD)                       # e.g. de33ee9e7e9d
 git archive --format=tar.gz --prefix=tsplat-service/ "$SHA" service/tsplat \
   | base64 > bundle.b64
 echo "$(shasum -a 256 bundle.b64 | awk '{print $1}')" > bundle.sha256
@@ -135,6 +135,15 @@ The `publish` endpoint (off by default, on in production) registers the
 output bundle in the registry under the service's group. To enable it, set
 `publish_enabled`, `registry_url` and `registry_group` in
 `deploy/service.json` and restart the agent.
+
+With `registry_pool` configured (PR #11, `de33ee9`), the service is also the
+worker for the registry's `image-to-splat` transform: the registry owns
+sign-in, groups and permissions, and the worker claims jobs with its pool
+bearer, reads the input from a presigned URL and returns the PLY through a
+presigned PUT — it holds no S3 keys. If the pool's `token_file` is missing the
+pool stays off (the service still serves normal jobs). The idle release
+re-checks under the GPU lock (PR #12), so a pool run that has just finished
+keeps the model loaded.
 
 ## 6. Test page (PR #9)
 
