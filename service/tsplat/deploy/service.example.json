@@ -1,0 +1,31 @@
+{
+  "plane_url": "https://cloud.samtg.xyz/api/v1",
+  "state_dir": "~/.local/var/tsplat-service/state",
+  "host": "0.0.0.0",
+  "port": 8812,
+  "allowed_groups": [
+    "work",
+    "services"
+  ],
+  "admins": [],
+  "principal": {
+    "token_file": "~/.local/var/tsplat-service/token",
+    "expected_username": "REPLACE-WITH-YOUR-SERVICE-USERNAME",
+    "expected_user_id": "REPLACE-WITH-YOUR-USER-ID"
+  },
+  "resource_id": "REPLACE-WITH-YOUR-RESOURCE",
+  "service_id": "REPLACE-WITH-YOUR-SERVICE-ID",
+  "memory_mb": 16384,
+  "ttl_seconds": 120,
+  "renewal_interval": 30,
+  "max_total_s": 21600,
+  "idle_release_s": 600,
+  "file_group": "tsplat-service-sink",
+  "triposplat_repo": "~/.local/var/triposplat/repo",
+  "publish_enabled": true,
+  "version": "set-by-release",
+  "registry_url": "REPLACE-WITH-YOUR-REGISTRY",
+  "registry_group": "REPLACE-WITH-YOUR-REGISTRY-GROUP",
+  "registry_poll_s": 15,
+  "registry_max_wait_s": 3600
+}

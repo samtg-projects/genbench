@@ -1,0 +1,18 @@
+# byte-compiled / caches
+__pycache__/
+*.pyc
+
+# runtime: weights, checkpoints, outputs, state, logs and the service's own token
+ckpts/
+*.ckpt
+*.pt
+*.safetensors
+weights/
+model/
+outputs/
+run/
+state/
+logs/
+token.hdr
+*token.hdr
+service.json
