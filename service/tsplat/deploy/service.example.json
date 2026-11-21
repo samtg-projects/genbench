@@ -9,7 +9,7 @@
   ],
   "admins": [],
   "principal": {
-    "token_file": "~/.local/var/tsplat-service/token.hdr",
+    "token_file": "~/.local/var/tsplat-service/token",
     "expected_username": "REPLACE-WITH-YOUR-SERVICE-USERNAME",
     "expected_user_id": "REPLACE-WITH-YOUR-USER-ID"
   },

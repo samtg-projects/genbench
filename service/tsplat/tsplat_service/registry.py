@@ -85,7 +85,7 @@ def follow(registry, jobs, me, jid, reg, reply_to):
             out = {**reg, "state": "failed", "error": f"{type(e).__name__}: {e}"}
         j = jobs.get(jid); result = dict(j["result"] or {}); result["registry"] = out
         jobs.update(jid, result=result)
-        msg = (f"tsplat-service job `{jid}`: published to the registry's *{self.group}* group as bundle `{out['bundle']}`."
+        msg = (f"tsplat-service job `{jid}`: published to the registry's *{registry.group}* group as bundle `{out['bundle']}`."
                if out["state"] == "published" else f"tsplat-service job `{jid}`: registry publish failed: {out.get('error')}")
         try:
             me.comment(reply_to["kind"], reply_to["id"], msg)

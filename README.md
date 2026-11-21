@@ -22,5 +22,6 @@ Every GPU run is a claim on `obelisk-services/gpu-0` through `~/.local/bin/obeli
 ## Conventions
 
 - TripoSplat PLYs are y-down, and the input image looks along −x (`splatFrame` view `-1,0,0`).
+- TripoSplat is `https://github.com/VAST-AI-Research/TripoSplat`, pinned at `d8db9e0` (the pin is in `tsplat.sh:7`).
 - Synthetic and pathway C datasets are z-up, OpenGL camera-to-world (`[right, up, -forward, centre]`).
 - No credentials live here. `tsplat.sh` reads plane files with the account's header file (`~/.samcloud/token.hdr`), never a token in the script.

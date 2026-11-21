@@ -14,18 +14,23 @@ There is no deadline; a run waits as long as the queue takes. Results are hosted
 readers are the --reply-to object's readers; nothing is posted as a comment. A background observer
 writes each URL to ~/var/hermes-obelisk/images/NAME/results.jsonl as it lands. Running the same batch
 again is safe: the same key returns the same job and never generates a second image.
+Set IMAGE_SERVICE_RELEASE to the release directory that has client.py; the default is
+~/.local/var/image-service/releases.
 Task: ob-image seat tool for hermes-obelisk.
 """
 import json, os, re, subprocess, sys, threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-RELEASE = Path.home() / "var/image-service/releases"
+IMAGE_SERVICE_RELEASE = os.environ.get(
+    "IMAGE_SERVICE_RELEASE",
+    str(Path.home() / "var" / "image-service" / "releases"),
+)
 API = "http://127.0.0.1:8811/v1"
-TOKEN = Path.home() / ".samcloud/token"
-RUNS = Path.home() / "var/hermes-obelisk/images"
-sys.path.insert(0, str(RELEASE))
-from image_service.client import Client, ClientError, image_request  # noqa: E402
+TOKEN = Path.home() / ".samcloud" / "token"
+RUNS = Path.home() / "var" / "hermes-obelisk" / "images"
+sys.path.insert(0, IMAGE_SERVICE_RELEASE)
+from image_service.client import Client, ClientError, image_request    # noqa: E402
 
 
 def load(path):
@@ -93,7 +98,7 @@ def _run(run):
 
     def observe(pair):
         it, job = pair
-        try:  # one streaming observer per job; waits as long as the queue takes
+        try:   # one streaming observer per job; waits as long as the queue takes
             record("results.jsonl", {"key": it["key"], "job_id": job, "seed": it.get("seed", 0), "url": client.result(job)})
         except ClientError as e:
             record("results.jsonl", {"key": it["key"], "job_id": job, "error": str(e),
@@ -116,9 +121,9 @@ def show(name):
     print(f"{name}: {len(items)} prompts, {len(sub)} submitted, {len(ok)} finished, {len(bad)} failed, "
           f"{len(items) - len(ok) - len(bad)} waiting")
     for r in ok:
-        print(f"  {r['key']}  seed {r['seed']}  {r['url']}")
+        print(f"   {r['key']}  seed {r['seed']}   {r['url']}")
     for r in bad:
-        print(f"  {r['key']}  FAILED  {r['error']}")
+        print(f"   {r['key']}  FAILED   {r['error']}")
 
 
 def main(argv):

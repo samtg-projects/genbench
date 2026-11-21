@@ -17,7 +17,7 @@
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>ProcessType</key><string>Standard</string>
   <key>LimitLoadToSessionType</key><string>Background</string>
-  <key>StandardOutPath</key><string>@HOME@/.local/var/tsplat-service/logs/service.log</string>
-  <key>StandardErrorPath</key><string>@HOME@/.local/var/tsplat-service/logs/service.log</string>
+  <key>StandardOutPath</key><string>~/.local/var/tsplat-service/logs/service.log</string>
+  <key>StandardErrorPath</key><string>~/.local/var/tsplat-service/logs/service.log</string>
 </dict>
 </plist>
