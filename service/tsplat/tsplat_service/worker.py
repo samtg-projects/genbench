@@ -30,6 +30,14 @@ class Warm:
 
     def ensure(self):
         if self.pipe: return self.pipe
+        try:
+            return self._acquire_and_load()
+        except BaseException:                      # a failed wait, import or load must not leave a lease behind:
+            log.error("acquire/load failed; giving back lease %s", self.lease)   # gpu-0 is expiry_policy hold
+            self.release()
+            raise
+
+    def _acquire_and_load(self):
         t = time.time()
         def held(lid):                             # known while still queued, so shutdown can withdraw it
             self.lease = lid; STATE["lease"] = lid
@@ -77,7 +85,7 @@ class Warm:
 
 
 def splat_one(pipe, src: Path, matte: str, n: int, work: Path):
-    """Run TripoSplat; `auto` falls back to the whole frame when BiRefNet finds no subject."""
+    """Run TripoSplat; `auto` falls back to the whole frame when BiRefNet finds no subject (task 1399)."""
     from PIL import Image
     used = matte
     if matte == "opaque":
@@ -106,7 +114,7 @@ WARM = None                                    # the live Warm, so shutdown can 
 
 
 def release_on_exit():
-    """Give the GPU lease back when the process is stopped (launchctl bootout sends SIGTERM)."""
+    """Give the gpu-0 lease back when the process is stopped (launchctl bootout sends SIGTERM)."""
     w = WARM
     if w and w.lease:
         w.stop.set()
@@ -124,7 +132,7 @@ def run(cfg, jobs, me):
         try:
             jid = jobs.q.get(timeout=idle)
         except queue.Empty:
-            if warm.pipe: log.info("idle %ss; releasing", idle); warm.release()
+            if warm.pipe or warm.lease: log.info("idle %ss; releasing", idle); warm.release()
             continue
         j = jobs.get(jid)
         if not j or j["state"] not in ("queued",): continue
@@ -141,7 +149,7 @@ def run(cfg, jobs, me):
             timings["fetch_s"] = round(time.time() - t0, 1)
             warm.lease_wait_s = 0.0
             t = time.time(); pipe = warm.ensure()
-            timings["lease_wait_s"] = warm.lease_wait_s                      # queued behind other GPU holders
+            timings["lease_wait_s"] = warm.lease_wait_s                      # queued behind other gpu-0 holders
             timings["load_s"] = round(time.time() - t - warm.lease_wait_s, 1)
             torch = _torch()
             t = time.time()
@@ -182,7 +190,7 @@ def run(cfg, jobs, me):
                 body += f"\n\n![](/api/v1/files/{result['beauty_file_id']}/raw)"
             reg_state = result.get("registry", {}).get("state")
             if reg_state == "converting":
-                body += "\n\nRegistry publish is converting; the bundle id follows here."
+                body += "\n\nRegistry publish to *tsplat drafts* is converting; the bundle id follows here."
             elif reg_state == "failed":
                 body += f"\n\nRegistry publish failed: {result['registry']['error'][:300]}"
             try:

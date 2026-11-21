@@ -69,16 +69,8 @@ class Principal:
         log.info("principal ok: %s (user %s)", v["username"], v.get("user_id"))
 
     def upload(self, path: Path, group_scope=None):
-        boundary = uuid.uuid4().hex
         ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-        parts = [f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{path.name}\"\r\n"
-                 f"Content-Type: {ctype}\r\n\r\n".encode(), path.read_bytes(), b"\r\n"]
-        if group_scope:
-            parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"group_scope\"\r\n\r\n{group_scope}\r\n".encode())
-        parts.append(f"--{boundary}--\r\n".encode())
-        st, b = _req(f"{self.api}/files", self.hdr(), "POST", b"".join(parts),
-                     {"Content-Type": f"multipart/form-data; boundary={boundary}"}, timeout=300)
-        return json.loads(b)["id"]
+        return upload_bytes(self.api, self.hdr(), path.name, path.read_bytes(), ctype, group_scope)
 
     def can_read(self, kind, oid):
         return caller_can_read(self.api, self.hdr(), kind, oid)
@@ -143,3 +135,24 @@ def fetch_as_caller(api, caller_bearer, file_id, dest: Path):
     st, b = _req(f"{api.rstrip('/')}/files/{file_id}/raw", caller_bearer, timeout=120)
     dest.write_bytes(b)
     return dest
+
+
+def upload_bytes(api, bearer, name, data, ctype, group_scope=None):
+    """POST /files as whoever `bearer` is; returns the new file id."""
+    boundary = uuid.uuid4().hex
+    name = "".join(ch for ch in name if ch.isalnum() or ch in "._-")[:80] or "upload"
+    parts = [f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{name}\"\r\n"
+             f"Content-Type: {ctype}\r\n\r\n".encode(), data, b"\r\n"]
+    if group_scope:
+        parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"group_scope\"\r\n\r\n{group_scope}\r\n".encode())
+    parts.append(f"--{boundary}--\r\n".encode())
+    st, b = _req(f"{api.rstrip('/')}/files", bearer, "POST", b"".join(parts),
+                 {"Content-Type": f"multipart/form-data; boundary={boundary}"}, timeout=300)
+    return json.loads(b)["id"]
+
+
+def raw_as_caller(api, caller_bearer, file_id):
+    """Read a file with the caller's bearer (the test page's result viewer); returns (bytes, content type)."""
+    r = urllib.request.Request(f"{api.rstrip('/')}/files/{int(file_id)}/raw", headers={"Authorization": caller_bearer})
+    with urllib.request.urlopen(r, timeout=120) as resp:
+        return resp.read(), resp.headers.get("Content-Type", "application/octet-stream")

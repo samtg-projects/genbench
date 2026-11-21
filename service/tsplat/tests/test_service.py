@@ -13,9 +13,10 @@ REAL_ENSURE = worker.Warm.ensure              # the svc fixture stubs it; the qu
 USERS = {"Bearer good": {"valid": True, "user_id": 7, "username": "alice", "groups": [{"slug": "work"}]},
          "Bearer other": {"valid": True, "user_id": 8, "username": "bob", "groups": ["work"]},
          "Bearer outsider": {"valid": True, "user_id": 9, "username": "eve", "groups": ["guests"]},
-         "Bearer svc": {"valid": True, "user_id": 99, "username": "service-tsplat", "groups": ["services"]}}
+         "Bearer svc": {"valid": True, "user_id": 99, "username": "wafer-tsplat-service", "groups": ["services"]}}
 SEEN = {"fetch_bearers": [], "uploads": [], "comments": [], "leases": [], "links": {}, "reg": []}
-READABLE = {"Bearer good": {7001, 4242}, "Bearer other": {7001, 7}, "Bearer svc": {7001, 7}}
+RAW_CT = {}
+READABLE = {"Bearer good": {1399, 4242}, "Bearer other": {1399, 7}, "Bearer svc": {1399, 7}}
 
 
 class FakePlane(BaseHTTPRequestHandler):
@@ -33,7 +34,8 @@ class FakePlane(BaseHTTPRequestHandler):
             if a == "Bearer other": return self._j(403, {"detail": "no access"})
             from PIL import Image; import io
             buf = io.BytesIO(); Image.new("RGB", (64, 64), (200, 10, 10)).save(buf, "PNG")
-            b = buf.getvalue(); self.send_response(200); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b); return
+            b = buf.getvalue(); self.send_response(200); self.send_header("Content-Length", str(len(b)))
+            self.send_header("Content-Type", RAW_CT.get(int(self.path.split("/")[4]), "image/png")); self.end_headers(); self.wfile.write(b); return
         if self.path.startswith("/api/transforms/"):
             SEEN["reg"].append(("GET", self.path, a))
             return self._j(200, {"/t1": {"id": "t1", "preset": "ply-to-dgs", "status": "completed", "next": "t2", "outputs": ["d1"]},
@@ -57,7 +59,10 @@ class FakePlane(BaseHTTPRequestHandler):
             b = json.loads(body); SEEN["reg"].append(("POST", self.path, b, self.headers.get("Authorization")))
             return self._j(201, {"/api/files": {"file": {"id": "f1"}}, "/api/assets": {"id": "a1"}, "/api/transforms": {"id": "t1"}}[self.path])
         if self.path == "/api/v1/files":
-            SEEN["uploads"].append(self.headers.get("Authorization")); return self._j(200, {"id": 1000 + len(SEEN["uploads"])})
+            if self.headers.get("Authorization") == "Bearer other": return self._j(403, {"detail": "not a member of work"})
+            SEEN["uploads"].append(self.headers.get("Authorization"))
+            if b'name="group_scope"' in body and b"\r\n\r\nwork\r\n" in body: SEEN.setdefault("work_uploads", []).append(self.headers.get("Authorization"))
+            return self._j(200, {"id": 1000 + len(SEEN["uploads"])})
         if self.path.endswith("/leases"):
             SEEN["leases"].append(json.loads(body)); return self._j(200, {"lease_id": "L1", "status": "queued", "queue_position": 1})
         if self.path.endswith("/renew"): return self._j(200, {"status": "active"})
@@ -103,10 +108,10 @@ def svc(tmp_path_factory):
     api = f"http://127.0.0.1:{fp.server_port}/api/v1"
     (tmp / "tok").write_text("Authorization: Bearer svc\n")
     cfg = {"plane_url": api, "state_dir": str(tmp / "state"), "port": 0, "allowed_groups": ["work", "services"],
-           "principal": {"token_file": str(tmp / "tok"), "expected_username": "service-tsplat", "expected_user_id": 99},
-           "resource_id": "gpu-metal", "memory_mb": 16384, "idle_release_s": 1, "renewal_interval": 30,
+           "principal": {"token_file": str(tmp / "tok"), "expected_username": "wafer-tsplat-service", "expected_user_id": 99},
+           "resource_id": "wafer/gpu-metal", "memory_mb": 16384, "idle_release_s": 1, "renewal_interval": 30,
            "file_group": "tsplat-service-sink", "triposplat_repo": str(tmp),
-           "publish_enabled": True, "registry_url": api.rsplit("/api/v1", 1)[0], "registry_group": "tsplat-drafts", "registry_poll_s": 0.05}
+           "publish_enabled": True, "registry_url": api.rsplit("/api/v1", 1)[0], "registry_group": "G-drafts", "registry_poll_s": 0.05}
     (tmp / "state").mkdir()
     me = plane.Principal(cfg); me.check()
     worker.Warm.ensure = lambda self: self.pipe or (setattr(self, "lease", self.me.lease_acquire()), setattr(self, "pipe", FakePipe()), self.pipe)[2]
@@ -141,7 +146,7 @@ def test_health_requires_bearer(svc):
     st, h = call(svc, "/health", "Bearer good"); assert st == 200 and h["service"] == "tsplat-service"
 
 
-RT = {"kind": "task", "id": 7001}
+RT = {"kind": "task", "id": 1399}
 
 
 def test_validation(svc):
@@ -161,23 +166,23 @@ def test_reply_to_checked_at_submit(svc):
 
 
 def test_job_end_to_end_with_fallback_and_caller_fetch(svc):
-    st, j = call(svc, "/v1/splat", "Bearer good", {"file_id": 3363, "reply_to": {"kind": "task", "id": 7001}}, idem="k1")
+    st, j = call(svc, "/v1/splat", "Bearer good", {"file_id": 3363, "reply_to": {"kind": "task", "id": 1399}}, idem="k1")
     assert st == 202 and j["state"] == "queued"
-    st2, j2 = call(svc, "/v1/splat", "Bearer good", {"file_id": 3363, "reply_to": {"kind": "task", "id": 7001}}, idem="k1")
+    st2, j2 = call(svc, "/v1/splat", "Bearer good", {"file_id": 3363, "reply_to": {"kind": "task", "id": 1399}}, idem="k1")
     assert st2 == 200 and j2["id"] == j["id"]                                  # idempotent
     st, done = call(svc, f"/v1/jobs/{j['id']}/wait?timeout_s=10", "Bearer good")
     assert done["state"] == "done", done
     assert done["result"]["matte_used"].startswith("auto→opaque")              # empty-matte fallback
     assert [c[1] for c in FakePipe.calls[-2:]] == ["RGB", "RGBA"]
     assert "Bearer good" in SEEN["fetch_bearers"] and "Bearer svc" not in SEEN["fetch_bearers"]  # caller's bearer, not ours
-    assert set(SEEN["uploads"]) == {"Bearer svc"}
+    assert {u for u in SEEN["uploads"] if u != "Bearer good"} == {"Bearer svc"}   # outputs: the service (UI uploads are the caller's)
     assert SEEN["leases"][0]["memory_mb"] == 16384
     assert {"lease_wait_s", "load_s", "splat_s"} <= set(done["timings"])
-    assert SEEN["comments"] and SEEN["comments"][-1][0] == "/api/v1/tasks/7001/comments"
+    assert SEEN["comments"] and SEEN["comments"][-1][0] == "/api/v1/tasks/1399/comments"
     links = done["result"]["links"]
     assert set(links) == {"ply_file_id", "prepared_file_id", "beauty_file_id", "sheet_file_id"}
     for k, lid in links.items():                                                # every output linked to reply_to
-        assert {"id": lid, "target_type": "task", "target_id": "7001"} in SEEN["links"][done["result"][k]]
+        assert {"id": lid, "target_type": "task", "target_id": "1399"} in SEEN["links"][done["result"][k]]
 
 
 def test_other_user_cannot_see_job_and_unreadable_input_fails(svc):
@@ -218,12 +223,13 @@ def test_queued_lease_is_known_before_grant(svc, tmp_path):
     with pytest.raises(SystemExit):
         REAL_ENSURE(w)
     assert seen["during_wait"] == "Lq"
+    assert Me.released == ["Lq"] and w.lease is None                 # ensure's own failure path already gave it back
     worker.release_on_exit()
-    assert Me.released == ["Lq"]
+    assert Me.released == ["Lq"]                                     # and shutdown has nothing left to send
 
 
 def test_publish_lands_in_drafts_and_fixes_view(svc):
-    st, j = call(svc, "/v1/splat", "Bearer good", {"file_id": 7002, "reply_to": RT, "publish": {"name": "SCOOT"}}, idem="pub1")
+    st, j = call(svc, "/v1/splat", "Bearer good", {"file_id": 3367, "reply_to": RT, "publish": {"name": "SCOOT"}}, idem="pub1")
     assert st == 202
     call(svc, f"/v1/jobs/{j['id']}/wait?timeout_s=10", "Bearer good")
     for _ in range(100):
@@ -232,7 +238,7 @@ def test_publish_lands_in_drafts_and_fixes_view(svc):
         time.sleep(0.05)
     assert r["state"] == "published" and r["bundle"] == "b1" and r["transforms"] == ["t1", "t2"], r
     posts = [e for e in SEEN["reg"] if e[0] == "POST"]
-    assert posts[0][2]["group_id"] == "tsplat-drafts" and posts[1][2]["group_id"] == "tsplat-drafts"        # always the drafts group
+    assert posts[0][2]["group_id"] == "G-drafts" and posts[1][2]["group_id"] == "G-drafts"        # always the drafts group
     assert posts[1][2]["type"] == "splat-ply" and posts[1][2]["name"] == "SCOOT"
     assert {"up", "center"} <= set(posts[1][2]["meta"]["splatFrame"])                              # the registry's required pair
     assert posts[2][2] == {"preset": "ply-to-dgs", "inputs": ["a1"], "params": {"up": [0.0, -1.0, 0.0]}}
@@ -270,3 +276,63 @@ def test_measure_on_a_real_ply(tmp_path, monkeypatch):
     f = REAL_MEASURE(tmp_path / "x.ply")
     assert f["up"] == [0.0, -1.0, 0.0] and f["view"] == [-1.0, 0.0, 0.0] and f["frame"] == "ply"
     assert abs(f["center"][1] - 1.0) < 0.1 and abs(f["height"] - 1.92) < 0.1
+
+
+def raw(base, path, bearer=None, data=None, ctype=None):
+    h = {}
+    if bearer: h["Authorization"] = bearer
+    if ctype: h["Content-Type"] = ctype
+    r = urllib.request.Request(base + path, data=data, headers=h, method="POST" if data is not None else "GET")
+    try:
+        with urllib.request.urlopen(r, timeout=10) as resp: return resp.status, resp.headers, resp.read()
+    except urllib.error.HTTPError as e: return e.code, e.headers, e.read()
+
+
+def test_ui_page_is_static_and_locked_down(svc):
+    st, h, b = raw(svc, "/")
+    assert st == 200 and h["Content-Type"].startswith("text/html") and b"tsplat-service" in b
+    assert "frame-ancestors 'none'" in h["Content-Security-Policy"] and h["Cache-Control"] == "no-store"
+    assert raw(svc, "/health")[0] == 401                                     # only the page itself is open
+
+
+def test_upload_is_stored_as_the_caller(svc):
+    assert raw(svc, "/v1/upload?name=x.png", data=b"\x89PNG", ctype="image/png")[0] == 401
+    assert raw(svc, "/v1/upload?name=x.txt", "Bearer good", data=b"hi", ctype="text/plain")[0] == 415
+    st, _, b = raw(svc, "/v1/upload?name=my%20scoot.png", "Bearer good", data=b"\x89PNG fake", ctype="image/png")
+    assert st == 201 and json.loads(b)["file_id"] > 1000
+    assert SEEN["work_uploads"][-1] == "Bearer good"                       # the caller's identity, group work
+
+
+def test_file_proxy_only_serves_own_outputs_with_safe_types(svc):
+    st, j = call(svc, "/v1/splat", "Bearer good", {"file_id": 77, "reply_to": RT}, idem="proxy1")
+    done = call(svc, f"/v1/jobs/{j['id']}/wait?timeout_s=10", "Bearer good")[1]["result"]
+    beauty, ply = done["beauty_file_id"], done["ply_file_id"]
+    st, h, b = raw(svc, f"/v1/files/{beauty}/raw", "Bearer good")
+    assert st == 200 and h["Content-Type"] == "image/png" and SEEN["fetch_bearers"][-1] == "Bearer good"
+    RAW_CT[ply] = "text/html"                                                   # whatever the plane says, never html from here
+    st, h, b = raw(svc, f"/v1/files/{ply}/raw", "Bearer good")
+    assert st == 200 and h["Content-Type"] == "application/octet-stream" and h["Content-Disposition"].startswith("attachment")
+    RAW_CT[beauty] = "image/svg+xml"
+    assert raw(svc, f"/v1/files/{beauty}/raw", "Bearer good")[1]["Content-Type"] == "application/octet-stream"
+    assert raw(svc, "/v1/files/3407/raw", "Bearer good")[0] == 404             # not one of good's outputs
+    assert raw(svc, f"/v1/files/{beauty}/raw", "Bearer other")[0] == 404       # someone else's job
+    assert raw(svc, f"/v1/files/{beauty}/raw")[0] == 401
+
+
+def test_upload_type_allowlist_and_group_refusal(svc):
+    assert raw(svc, "/v1/upload?name=x.svg", "Bearer good", data=b"<svg/>", ctype="image/svg+xml")[0] == 415
+    st, _, b = raw(svc, "/v1/upload?name=x.png", "Bearer other", data=b"\x89PNG", ctype="image/png")
+    assert st == 403 and b"work" in b
+
+
+def test_load_failure_releases_the_granted_lease(tmp_path):
+    """Lease granted, then the TripoSplat import fails: the lease is released, not renewed forever (ticket 1136 12:18)."""
+    class Me:
+        released = []
+        def lease_acquire(self, on_id=None): on_id("Lg"); return "Lg"
+        def lease_renew(self, lid): pass
+        def lease_release(self, lid): Me.released.append(lid)
+    w = worker.Warm({"triposplat_repo": str(tmp_path / "missing"), "renewal_interval": 3600}, Me())
+    with pytest.raises(Exception):
+        REAL_ENSURE(w)                                               # no triposplat module there
+    assert Me.released == ["Lg"] and w.lease is None and w.stop.is_set()

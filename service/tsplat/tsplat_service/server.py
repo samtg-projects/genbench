@@ -1,14 +1,17 @@
 """tsplat-service: TripoSplat image -> 3D Gaussian splat PLY, as an authenticated async network service.
 
-Pattern follows the samcloud image-service model (a per-seat authenticated async job service).
+Design: samcloud doc 683 (task 1401). Pattern follows obelisk-services/image-service:
 every route needs a samcloud bearer (verified per call), jobs are async with an idempotency key,
 inputs are fetched with the *caller's* bearer, outputs are uploaded under the service identity.
 """
-import hashlib, json, logging, os, queue, signal, sys, threading, time, uuid
+import hashlib, json, logging, os, queue, signal, sys, threading, time, urllib.error, urllib.parse, uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from . import plane, worker
+
+UI_HTML = (Path(__file__).parent / "ui.html").read_bytes()
+SAFE_IMAGES = ("image/png", "image/jpeg", "image/webp")      # never text/html or image/svg+xml from this origin
 
 log = logging.getLogger("tsplat")
 
@@ -57,6 +60,13 @@ class Jobs:
             while self.jobs.get(jid, {}).get("state") in ("queued", "running") and time.time() < end:
                 self.cv.wait(max(0.1, end - time.time()))
         return self.get(jid)
+
+    def result_file_ids(self, requester):
+        """File ids in this requester's own job results: the only ones the result viewer will proxy."""
+        keys = ("ply_file_id", "prepared_file_id", "beauty_file_id", "sheet_file_id")
+        with self.lock:
+            return {j["result"][k] for j in self.jobs.values() if j["requester"] == requester and j.get("result")
+                    for k in keys if k in j["result"]}
 
     def depth(self):
         with self.lock:
@@ -110,10 +120,36 @@ def make_handler(cfg, jobs, auth, me):
                 self._send(403, {"error": "not in an allowed group"}); return None, None
             return who, bearer
 
+        def _bytes(self, code, data, ctype, attachment=None):
+            self.send_response(code); self.send_header("Content-Type", ctype); self.send_header("Content-Length", str(len(data)))
+            if attachment: self.send_header("Content-Disposition", f'attachment; filename="{attachment}"')
+            self.send_header("Cache-Control", "no-store"); self.send_header("X-Content-Type-Options", "nosniff")
+            if ctype.startswith("text/html"):
+                self.send_header("Content-Security-Policy", "default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; "
+                                                          "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'")
+            self.end_headers(); self.wfile.write(data)
+
         def do_GET(self):
-            who, _ = self._auth()
-            if not who: return
             p = self.path.split("?")[0].rstrip("/")
+            if p in ("", "/ui"):                           # the test page: static, holds no data; every call it makes is authenticated
+                return self._bytes(200, UI_HTML, "text/html; charset=utf-8")
+            who, bearer = self._auth()
+            if not who: return
+            if p.startswith("/v1/files/") and p.endswith("/raw"):
+                try:
+                    fid = int(p.split("/")[3])
+                except ValueError:
+                    return self._send(400, {"error": "bad file id"})
+                if fid not in jobs.result_file_ids(who["username"]):   # only outputs of the caller's own jobs
+                    return self._send(404, {"error": "not one of your job outputs"})
+                try:
+                    data, ctype = plane.raw_as_caller(cfg["plane_url"], bearer, fid)
+                except urllib.error.HTTPError as e:
+                    return self._send(e.code, {"error": "cannot read that file"})
+                ctype = ctype.split(";")[0].strip().lower()
+                if ctype in SAFE_IMAGES:
+                    return self._bytes(200, data, ctype)
+                return self._bytes(200, data, "application/octet-stream", attachment=f"tsplat-{fid}.bin")
             if p == "/health":
                 return self._send(200, {"status": "ok", "service": "tsplat-service", "version": cfg.get("version"),
                                         "model_loaded": worker.STATE["loaded"], "lease": worker.STATE["lease"],
@@ -133,6 +169,22 @@ def make_handler(cfg, jobs, auth, me):
             who, bearer = self._auth()
             if not who: return
             p = self.path.split("?")[0].rstrip("/")
+            if p == "/v1/upload":                          # the test page's image upload, stored as the caller
+                n = int(self.headers.get("Content-Length") or 0)
+                ctype = self.headers.get("Content-Type", "")
+                if ctype.split(";")[0].strip().lower() not in SAFE_IMAGES:
+                    return self._send(415, {"error": "send an image (image/png, image/jpeg, image/webp)"})
+                ctype = ctype.split(";")[0].strip().lower()
+                if not 0 < n <= 25 * 2**20: return self._send(413, {"error": "image must be 1 byte to 25 MB"})
+                q = dict(kv.split("=", 1) for kv in self.path.split("?", 1)[1].split("&")) if "?" in self.path else {}
+                try:
+                    fid = plane.upload_bytes(cfg["plane_url"], bearer, urllib.parse.unquote(q.get("name", "upload.png")),
+                                             self.rfile.read(n), ctype, "work")
+                except urllib.error.HTTPError as e:
+                    if e.code == 403:
+                        return self._send(403, {"error": "uploads go to the work group, and you are not in it; give an existing file id instead"})
+                    return self._send(e.code, {"error": "the files plane refused the upload"})
+                return self._send(201, {"file_id": fid})
             try:
                 n = int(self.headers.get("Content-Length") or 0)
                 if n > 65536: return self._send(413, {"error": "body too large"})
